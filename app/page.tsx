@@ -3,7 +3,7 @@ import React, { useState, useRef, use, useEffect } from "react";
 import axios from "axios";
 import { SimliClient } from "simli-client";
 
-const simli_faceid = "5514e24d-6086-46a3-ace4-6a7264e5cb7c";
+const simli_faceid = "9f3a3361-41b4-4157-87e6-9e6e4557ca7f";
 const elevenlabs_voiceid = "1W00IGEmNmwmsDeYy7ag"; // Updated voice ID
 
 const simliClient = new SimliClient();
