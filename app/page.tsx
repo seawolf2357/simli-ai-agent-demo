@@ -9,9 +9,11 @@ const elevenlabs_voiceid = "1W00IGEmNmwmsDeYy7ag";
 const simliClient = new SimliClient();
 
 interface Message {
-  role: "user" | "assistant";
+  role: "system" | "user" | "assistant";
   content: string;
 }
+
+const systemPrompt = `You are a helpful AI assistant named "찐 자비스 1호". Your responses should be concise, informative, and friendly. Please communicate in Korean language.`;
 
 const Demo = () => {
   const [inputText, setInputText] = useState("");
@@ -19,7 +21,9 @@ const Demo = () => {
   const [error, setError] = useState("");
   const [chatgptText, setChatgptText] = useState("");
   const [startWebRTC, setStartWebRTC] = useState(false);
-  const [conversation, setConversation] = useState<Message[]>([]);
+  const [conversation, setConversation] = useState<Message[]>([
+    { role: "system", content: systemPrompt }
+  ]);
   const [showConversation, setShowConversation] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -100,8 +104,8 @@ const Demo = () => {
       const chatGPTResponse = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
-          model: "gpt-4-1106-preview",
-          messages: [...conversation, newUserMessage],
+          model: "gpt-4o-mini",
+          messages: conversation.concat(newUserMessage),
         },
         {
           headers: {
@@ -193,7 +197,7 @@ const Demo = () => {
             </button>
             {showConversation && (
               <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto">
-                {conversation.map((message, index) => (
+                {conversation.slice(1).map((message, index) => (
                   <div key={index} className={`mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}`}>
                     <strong>{message.role === "user" ? "You: " : "Assistant: "}</strong>
                     {message.content}
