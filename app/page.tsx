@@ -121,7 +121,7 @@ const Demo = () => {
         `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabs_voiceid}?output_format=pcm_16000`,
         {
           text: chatGPTText,
-          model_id: "eleven_multilingual_v1",
+          model_id: "eleven_multilingual_v2",
           language_id: "korean",
         },
         {
