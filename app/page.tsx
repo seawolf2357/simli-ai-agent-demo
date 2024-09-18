@@ -1,12 +1,17 @@
 "use client";
-import React, { useState, useRef, use, useEffect } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { SimliClient } from "simli-client";
 
 const simli_faceid = "9f3a3361-41b4-4157-87e6-9e6e4557ca7f";
-const elevenlabs_voiceid = "1W00IGEmNmwmsDeYy7ag"; // Updated voice ID
+const elevenlabs_voiceid = "1W00IGEmNmwmsDeYy7ag";
 
 const simliClient = new SimliClient();
+
+interface Message {
+  role: "user" | "assistant";
+  content: string;
+}
 
 const Demo = () => {
   const [inputText, setInputText] = useState("");
@@ -14,13 +19,15 @@ const Demo = () => {
   const [error, setError] = useState("");
   const [chatgptText, setChatgptText] = useState("");
   const [startWebRTC, setStartWebRTC] = useState(false);
+  const [conversation, setConversation] = useState<Message[]>([]);
+  const [showConversation, setShowConversation] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const conversationEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (videoRef.current && audioRef.current) {
-      // Step 0: Initialize Simli Client
       const SimliConfig = {
         apiKey: process.env.NEXT_PUBLIC_SIMLI_API_KEY,
         faceID: simli_faceid,
@@ -30,7 +37,6 @@ const Demo = () => {
       };
 
       simliClient.Initialize(SimliConfig);
-
       console.log("Simli Client initialized");
     }
 
@@ -54,14 +60,18 @@ const Demo = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (conversationEndRef.current) {
+      conversationEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [conversation]);
+
   const handleStart = () => {
-    // Step 1: Start WebRTC
     simliClient.start();
     setStartWebRTC(true);
     setIsLoading(true);
 
     setTimeout(() => {
-      // Step 2: Send empty audio data to WebRTC to start rendering
       const audioData = new Uint8Array(6000).fill(0);
       simliClient.sendAudioData(audioData);
     }, 4000);
@@ -77,17 +87,21 @@ const Demo = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setInputText("");
+    if (inputText.trim() === "") return;
+
     setIsLoading(true);
     setError("");
 
+    const newUserMessage: Message = { role: "user", content: inputText };
+    setConversation(prev => [...prev, newUserMessage]);
+    setInputText("");
+
     try {
-      // Step 3: Send text to OpenAI ChatGPT
       const chatGPTResponse = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
-          model: "gpt-4-1106-preview", // Updated to GPT-4-mini model
-          messages: [{ role: "user", content: inputText }],
+          model: "gpt-4-1106-preview",
+          messages: [...conversation, newUserMessage],
         },
         {
           headers: {
@@ -100,13 +114,15 @@ const Demo = () => {
       const chatGPTText = chatGPTResponse.data.choices[0].message.content;
       setChatgptText(chatGPTText);
 
-      // Step 4: Convert ChatGPT response to speech using ElevenLabs API
+      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
+      setConversation(prev => [...prev, newAssistantMessage]);
+
       const elevenlabsResponse = await axios.post(
         `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabs_voiceid}?output_format=pcm_16000`,
         {
           text: chatGPTText,
           model_id: "eleven_multilingual_v1",
-          language_id: "korean", // Set language to Korean
+          language_id: "korean",
         },
         {
           headers: {
@@ -117,11 +133,9 @@ const Demo = () => {
         }
       );
 
-      // Step 5: Convert audio to Uint8Array (Make sure its of type PCM16)
       const pcm16Data = new Uint8Array(elevenlabsResponse.data);
       console.log(pcm16Data);
 
-      // Step 6: Send audio data to WebRTC as 6000 byte chunks
       const chunkSize = 6000;
       for (let i = 0; i < pcm16Data.length; i += chunkSize) {
         const chunk = pcm16Data.slice(i, i + chunkSize);
@@ -135,10 +149,13 @@ const Demo = () => {
     }
   };
 
+  const toggleConversation = () => {
+    setShowConversation(!showConversation);
+  };
+
   return (
     <div className="bg-black w-full h-svh flex flex-col justify-center items-center font-mono text-white">
       <div className="w-[512px] h-svh flex flex-col justify-center items-center gap-4">
-        {/* Simli Client Renderer */}
         <div className="relative w-full aspect-video">
           <video
             ref={videoRef}
@@ -168,6 +185,23 @@ const Demo = () => {
                 {isLoading ? "Processing..." : "Send"}
               </button>
             </form>
+            <button
+              onClick={toggleConversation}
+              className="w-full bg-gray-700 text-white py-2 px-4 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+            >
+              {showConversation ? "Hide Conversation" : "Show Conversation"}
+            </button>
+            {showConversation && (
+              <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto">
+                {conversation.map((message, index) => (
+                  <div key={index} className={`mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}`}>
+                    <strong>{message.role === "user" ? "You: " : "Assistant: "}</strong>
+                    {message.content}
+                  </div>
+                ))}
+                <div ref={conversationEndRef} />
+              </div>
+            )}
           </>
         ) : (
           <button
