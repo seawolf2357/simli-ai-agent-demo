@@ -4,7 +4,7 @@ import axios from "axios";
 import { SimliClient } from "simli-client";
 
 const simli_faceid = "5514e24d-6086-46a3-ace4-6a7264e5cb7c";
-const elevenlabs_voiceid = "onwK4e9ZLuTAKqWW03F9";
+const elevenlabs_voiceid = "1W00IGEmNmwmsDeYy7ag"; // Updated voice ID
 
 const simliClient = new SimliClient();
 
@@ -86,7 +86,7 @@ const Demo = () => {
       const chatGPTResponse = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
-          model: "gpt-3.5-turbo",
+          model: "gpt-4-1106-preview", // Updated to GPT-4-mini model
           messages: [{ role: "user", content: inputText }],
         },
         {
@@ -106,6 +106,7 @@ const Demo = () => {
         {
           text: chatGPTText,
           model_id: "eleven_multilingual_v1",
+          language_id: "korean", // Set language to Korean
         },
         {
           headers: {
