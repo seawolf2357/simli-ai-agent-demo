@@ -77,6 +77,70 @@ const Demo = () => {
     }
   }, [conversation]);
 
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputText.trim() === "") return;
+
+    setIsLoading(true);
+    setError("");
+
+    const newUserMessage: Message = { role: "user", content: inputText };
+    setConversation(prev => [...prev, newUserMessage]);
+    setInputText("");
+
+    try {
+      const chatGPTResponse = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: "gpt-4o-mini",
+          messages: conversation.concat(newUserMessage),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const chatGPTText = chatGPTResponse.data.choices[0].message.content;
+      setChatgptText(chatGPTText);
+
+      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
+      setConversation(prev => [...prev, newAssistantMessage]);
+
+      const elevenlabsResponse = await axios.post(
+        `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabs_voiceid}?output_format=pcm_16000`,
+        {
+          text: chatGPTText,
+          model_id: "eleven_multilingual_v2",
+          language_id: "korean",
+        },
+        {
+          headers: {
+            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "arraybuffer",
+        }
+      );
+
+      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
+      console.log(pcm16Data);
+
+      const chunkSize = 6000;
+      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+        const chunk = pcm16Data.slice(i, i + chunkSize);
+        simliClient.sendAudioData(chunk);
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [inputText, conversation, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
@@ -84,11 +148,11 @@ const Demo = () => {
     silenceTimeoutRef.current = setTimeout(() => {
       if (transcriptRef.current.trim()) {
         setInputText(transcriptRef.current.trim());
-        handleSubmit(new Event('submit') as React.FormEvent<HTMLFormElement>);
+        handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
         transcriptRef.current = '';
       }
     }, SILENCE_THRESHOLD);
-  }, []);
+  }, [handleSubmit, setInputText]);
 
   const startListening = async () => {
     try {
@@ -170,70 +234,6 @@ const Demo = () => {
         audioContext.current.close();
       }
     };
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputText.trim() === "") return;
-
-    setIsLoading(true);
-    setError("");
-
-    const newUserMessage: Message = { role: "user", content: inputText };
-    setConversation(prev => [...prev, newUserMessage]);
-    setInputText("");
-
-    try {
-      const chatGPTResponse = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o-mini",
-          messages: conversation.concat(newUserMessage),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      const chatGPTText = chatGPTResponse.data.choices[0].message.content;
-      setChatgptText(chatGPTText);
-
-      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
-      setConversation(prev => [...prev, newAssistantMessage]);
-
-      const elevenlabsResponse = await axios.post(
-        `https://api.elevenlabs.io/v1/text-to-speech/${elevenlabs_voiceid}?output_format=pcm_16000`,
-        {
-          text: chatGPTText,
-          model_id: "eleven_multilingual_v2",
-          language_id: "korean",
-        },
-        {
-          headers: {
-            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          responseType: "arraybuffer",
-        }
-      );
-
-      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-      console.log(pcm16Data);
-
-      const chunkSize = 6000;
-      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-        const chunk = pcm16Data.slice(i, i + chunkSize);
-        simliClient.sendAudioData(chunk);
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const toggleConversation = () => {
