@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { SimliClient } from "simli-client";
 
@@ -25,10 +25,17 @@ const Demo = () => {
     { role: "system", content: systemPrompt }
   ]);
   const [showConversation, setShowConversation] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<WebSocket | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const transcriptRef = useRef<string>('');
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const SILENCE_THRESHOLD = 500; // 0.5초로 줄임
 
   useEffect(() => {
     if (videoRef.current && audioRef.current) {
@@ -70,26 +77,7 @@ const Demo = () => {
     }
   }, [conversation]);
 
-  const handleStart = () => {
-    simliClient.start();
-    setStartWebRTC(true);
-    setIsLoading(true);
-
-    setTimeout(() => {
-      const audioData = new Uint8Array(6000).fill(0);
-      simliClient.sendAudioData(audioData);
-    }, 4000);
-
-    audioContext.current = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
-    return () => {
-      if (audioContext.current) {
-        audioContext.current.close();
-      }
-    };
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim() === "") return;
 
@@ -151,6 +139,106 @@ const Demo = () => {
     } finally {
       setIsLoading(false);
     }
+  }, [inputText, conversation, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+
+  const resetSilenceTimeout = useCallback(() => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    silenceTimeoutRef.current = setTimeout(() => {
+      if (transcriptRef.current.trim()) {
+        setInputText(transcriptRef.current.trim());
+        handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
+        transcriptRef.current = '';
+      }
+    }, SILENCE_THRESHOLD);
+  }, [handleSubmit, setInputText]);
+
+  const startListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      
+      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
+        'token',
+        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
+      ]);
+
+      socketRef.current.onopen = () => {
+        console.log('WebSocket connection opened');
+        setIsListening(true);
+        
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.addEventListener('dataavailable', (event) => {
+            if (socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(event.data);
+            }
+          });
+          mediaRecorderRef.current.start(250);
+        }
+      };
+
+      socketRef.current.onmessage = (message) => {
+        const received = JSON.parse(message.data);
+        const transcript = received.channel.alternatives[0].transcript;
+        if (transcript) {
+          if (received.is_final) {
+            transcriptRef.current = transcript;
+            resetSilenceTimeout();
+          } else {
+            // 중간 결과를 UI에 표시
+            setInputText(transcript);
+          }
+        }
+      };
+
+      socketRef.current.onclose = () => {
+        console.log('WebSocket connection closed');
+        setIsListening(false);
+      };
+
+      socketRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setError('WebSocket 연결 오류');
+        setIsListening(false);
+      };
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      setError('마이크 접근 오류');
+    }
+  };
+
+  const stopListening = () => {
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+    }
+    setIsListening(false);
+  };
+
+  const handleStart = () => {
+    simliClient.start();
+    setStartWebRTC(true);
+    setIsLoading(true);
+    startListening();
+
+    setTimeout(() => {
+      const audioData = new Uint8Array(6000).fill(0);
+      simliClient.sendAudioData(audioData);
+    }, 4000);
+
+    audioContext.current = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
+    return () => {
+      if (audioContext.current) {
+        audioContext.current.close();
+      }
+    };
   };
 
   const toggleConversation = () => {
@@ -206,6 +294,9 @@ const Demo = () => {
                 <div ref={conversationEndRef} />
               </div>
             )}
+            <div>
+              <p>{isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}</p>
+            </div>
           </>
         ) : (
           <button
