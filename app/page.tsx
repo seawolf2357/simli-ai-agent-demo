@@ -154,15 +154,15 @@ const Demo = () => {
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
 
-  const startListening = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      
-      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general&vad_turnoff=2000', [
-        'token',
-        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
-      ]);
+const startListening = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    
+    socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=false&vad_turnoff=2000', [
+      'token',
+      process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
+    ]);
 
       socketRef.current.onopen = () => {
         console.log('WebSocket connection opened');
@@ -197,12 +197,13 @@ const Demo = () => {
         setError('WebSocket 연결 오류');
         setIsListening(false);
       };
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      setError('마이크 접근 오류');
-    }
-  };
 
+  } catch (error) {
+    console.error('Error accessing microphone:', error);
+    setError('마이크 접근 오류');
+  }
+};
+  
   const stopListening = () => {
     if (socketRef.current) {
       socketRef.current.close();
