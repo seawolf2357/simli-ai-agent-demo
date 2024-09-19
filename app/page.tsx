@@ -35,7 +35,7 @@ const Demo = () => {
   const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const SILENCE_THRESHOLD = 2000; // 2초 동안 침묵이 지속되면 질문이 끝났다고 판단
+  const SILENCE_THRESHOLD = 500; // 0.5초로 줄임
 
   useEffect(() => {
     if (videoRef.current && audioRef.current) {
@@ -154,15 +154,15 @@ const Demo = () => {
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
 
-const startListening = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    
-    socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=false&vad_turnoff=2000', [
-      'token',
-      process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
-    ]);
+  const startListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      
+      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
+        'token',
+        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
+      ]);
 
       socketRef.current.onopen = () => {
         console.log('WebSocket connection opened');
@@ -182,8 +182,13 @@ const startListening = async () => {
         const received = JSON.parse(message.data);
         const transcript = received.channel.alternatives[0].transcript;
         if (transcript) {
-          transcriptRef.current += ' ' + transcript;
-          resetSilenceTimeout();
+          if (received.is_final) {
+            transcriptRef.current = transcript;
+            resetSilenceTimeout();
+          } else {
+            // 중간 결과를 UI에 표시
+            setInputText(transcript);
+          }
         }
       };
 
@@ -197,13 +202,12 @@ const startListening = async () => {
         setError('WebSocket 연결 오류');
         setIsListening(false);
       };
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      setError('마이크 접근 오류');
+    }
+  };
 
-  } catch (error) {
-    console.error('Error accessing microphone:', error);
-    setError('마이크 접근 오류');
-  }
-};
-  
   const stopListening = () => {
     if (socketRef.current) {
       socketRef.current.close();
