@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { SimliClient } from "simli-client";
+import Image from "next/image";
 
 interface Character {
   name: string;
@@ -41,12 +42,15 @@ const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }>
       <div className="flex space-x-4">
         {characters.map((character) => (
           <div key={character.name} className="flex flex-col items-center">
-            <img
-              src={character.image}
-              alt={character.name}
-              className="w-32 h-32 object-cover rounded-full cursor-pointer hover:opacity-80"
-              onClick={() => onSelect(character)}
-            />
+            <div className="w-32 h-32 relative cursor-pointer hover:opacity-80" onClick={() => onSelect(character)}>
+              <Image
+                src={character.image}
+                alt={character.name}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-full"
+              />
+            </div>
             <p className="mt-2">{character.name}</p>
           </div>
         ))}
@@ -361,4 +365,7 @@ const Demo = () => {
   );
 };
 
-export default Demo;              
+export default Demo;
+
+
+              
