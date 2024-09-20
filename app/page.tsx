@@ -1,4 +1,3 @@
-
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -84,11 +83,10 @@ const Demo = () => {
   const [showConversation, setShowConversation] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
-  // 녹화 관련 상태와 참조
-  const [recordedBlobs, setRecordedBlobs] = useState<Blob[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const downloadUrlRef = useRef<string | null>(null);
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   const audioContext = useRef<AudioContext | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -134,7 +132,6 @@ const Demo = () => {
       console.log("SimliClient has failed to connect!");
     });
 
-    // SimliClient의 스트림을 녹화하기 위해 이벤트 핸들러 추가
     simliClient.on("startSpeaking", () => {
       startRecording();
     });
@@ -150,6 +147,53 @@ const Demo = () => {
     }
   }, [conversation]);
 
+  const startRecording = () => {
+    if (videoRef.current && audioRef.current) {
+      const videoStream = videoRef.current.captureStream();
+      const audioStream = audioRef.current.captureStream();
+      const combinedStream = new MediaStream([
+        ...videoStream.getVideoTracks(),
+        ...audioStream.getAudioTracks(),
+      ]);
+
+      mediaStreamRef.current = combinedStream;
+      mediaRecorderRef.current = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        chunksRef.current = [];
+        downloadWebM(blob);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const downloadWebM = (blob: Blob) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'response.webm';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -157,6 +201,10 @@ const Demo = () => {
 
       setIsLoading(true);
       setError("");
+
+      // 이전 녹화 중지 및 새 녹화 시작
+      stopRecording();
+      startRecording();
 
       const newUserMessage: Message = { role: "user", content: inputText };
       setConversation((prev) => [...prev, newUserMessage]);
@@ -207,14 +255,18 @@ const Demo = () => {
           const chunk = pcm16Data.slice(i, i + chunkSize);
           simliClient.sendAudioData(chunk);
         }
+
+        // 응답 처리가 완료되면 녹화 중지
+        stopRecording();
       } catch (err) {
         setError("오류가 발생했습니다. 다시 시도해주세요.");
         console.error(err);
+        stopRecording();
       } finally {
         setIsLoading(false);
       }
     },
-    [inputText, conversation, selectedCharacter]
+    [inputText, conversation, selectedCharacter, isRecording]
   );
 
   const resetSilenceTimeout = useCallback(() => {
@@ -297,61 +349,8 @@ const Demo = () => {
     setIsListening(false);
   };
 
-  const startRecording = () => {
-    if (videoRef.current && audioRef.current) {
-      // 비디오 스트림 가져오기
-      const videoStream = videoRef.current.captureStream();
-      // 오디오 스트림 가져오기
-      const audioStream = audioRef.current.captureStream();
-
-      // 비디오 스트림과 오디오 스트림 결합
-      const combinedStream = new MediaStream([
-        ...videoStream.getVideoTracks(),
-        ...audioStream.getAudioTracks(),
-      ]);
-
-      // MediaRecorder 생성
-      mediaRecorderRef.current = new MediaRecorder(combinedStream, { mimeType: "video/webm; codecs=vp9,opus" });
-      const localRecordedBlobs: Blob[] = [];
-
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data && event.data.size > 0) {
-          localRecordedBlobs.push(event.data);
-        }
-      };
-
-      mediaRecorderRef.current.onstop = () => {
-        const superBuffer = new Blob(localRecordedBlobs, { type: "video/webm" });
-        const url = window.URL.createObjectURL(superBuffer);
-        setRecordedBlobs(localRecordedBlobs);
-        downloadUrlRef.current = url;
-        setDownloadUrl(url);
-      };
-
-      mediaRecorderRef.current.start();
-      console.log("Recording started");
-    } else {
-      console.error("비디오 또는 오디오 요소를 찾을 수 없습니다.");
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current) {
-      mediaRecorderRef.current.stop();
-      console.log("Recording stopped");
-    }
-  };
-
-  const handleDownload = () => {
-    if (downloadUrlRef.current) {
-      const a = document.createElement("a");
-      a.style.display = "none";
-      a.href = downloadUrlRef.current;
-      a.download = "response.webm";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(downloadUrlRef.current);
-    }
+  const toggleConversation = () => {
+    setShowConversation(!showConversation);
   };
 
   const handleStart = () => {
@@ -373,10 +372,6 @@ const Demo = () => {
     };
   };
 
-  const toggleConversation = () => {
-    setShowConversation(!showConversation);
-  };
-
   if (!selectedCharacter) {
     return (
       <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
@@ -384,6 +379,7 @@ const Demo = () => {
       </div>
     );
   }
+
 
   return (
     <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
@@ -436,15 +432,6 @@ const Demo = () => {
                 {isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}
               </p>
             </div>
-            {/* 다운로드 버튼 */}
-            {downloadUrl && (
-              <button
-                onClick={handleDownload}
-                className="w-full bg-green-600 text-white py-2 px-4 text-sm sm:text-base hover:bg-green-500 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-              >
-                응답 영상 다운로드
-              </button>
-            )}
           </>
         ) : (
           <button
