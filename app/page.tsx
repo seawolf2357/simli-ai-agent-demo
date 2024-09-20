@@ -1,3 +1,4 @@
+
 "use client";
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -16,14 +17,14 @@ const characters: Character[] = [
     name: "Man",
     image: "/media/man1.png",
     faceId: "74bf81fc-853f-41f6-aaa8-a8772d784327",
-    voiceId: "1W00IGEmNmwmsDeYy7ag"
+    voiceId: "1W00IGEmNmwmsDeYy7ag",
   },
   {
     name: "Woman",
     image: "/media/woman1.png",
     faceId: "3352626b-c78a-4a0f-9210-df0c3f54dd70",
-    voiceId: "ThT5KcBeYPX3keUQqHPh"
-  }
+    voiceId: "ThT5KcBeYPX3keUQqHPh",
+  },
 ];
 
 const simliClient = new SimliClient();
@@ -69,13 +70,11 @@ const Demo = () => {
   const [error, setError] = useState("");
   const [chatgptText, setChatgptText] = useState("");
   const [startWebRTC, setStartWebRTC] = useState(false);
-  const [conversation, setConversation] = useState<Message[]>([
-    { role: "system", content: systemPrompt }
-  ]);
+  const [conversation, setConversation] = useState<Message[]>([{ role: "system", content: systemPrompt }]);
   const [showConversation, setShowConversation] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
-  // 추가된 부분: 녹화 관련 상태와 참조
+  // 녹화 관련 상태와 참조
   const [recordedBlobs, setRecordedBlobs] = useState<Blob[]>([]);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const downloadUrlRef = useRef<string | null>(null);
@@ -87,7 +86,7 @@ const Demo = () => {
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef2 = useRef<MediaRecorder | null>(null);
-  const transcriptRef = useRef<string>('');
+  const transcriptRef = useRef<string>("");
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const SILENCE_THRESHOLD = 500;
@@ -109,7 +108,7 @@ const Demo = () => {
     return () => {
       simliClient.close();
     };
-  }, [selectedCharacter, videoRef, audioRef]);
+  }, [selectedCharacter]);
 
   useEffect(() => {
     simliClient.on("connected", () => {
@@ -125,7 +124,7 @@ const Demo = () => {
       console.log("SimliClient has failed to connect!");
     });
 
-    // 추가된 부분: SimliClient의 스트림을 녹화하기 위해 이벤트 핸들러 추가
+    // SimliClient의 스트림을 녹화하기 위해 이벤트 핸들러 추가
     simliClient.on("startSpeaking", () => {
       startRecording();
     });
@@ -133,7 +132,6 @@ const Demo = () => {
     simliClient.on("stopSpeaking", () => {
       stopRecording();
     });
-
   }, []);
 
   useEffect(() => {
@@ -142,69 +140,72 @@ const Demo = () => {
     }
   }, [conversation]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputText.trim() === "" || !selectedCharacter) return;
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (inputText.trim() === "" || !selectedCharacter) return;
 
-    setIsLoading(true);
-    setError("");
+      setIsLoading(true);
+      setError("");
 
-    const newUserMessage: Message = { role: "user", content: inputText };
-    setConversation(prev => [...prev, newUserMessage]);
-    setInputText("");
+      const newUserMessage: Message = { role: "user", content: inputText };
+      setConversation((prev) => [...prev, newUserMessage]);
+      setInputText("");
 
-    try {
-      const chatGPTResponse = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o-mini",
-          messages: conversation.concat(newUserMessage),
-        },
-        {
-          headers: {
-            Authorization: Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY},
-            "Content-Type": "application/json",
+      try {
+        const chatGPTResponse = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o-mini",
+            messages: conversation.concat(newUserMessage),
           },
-        }
-      );
+          {
+            headers: {
+              Authorization: Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY},
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-      const chatGPTText = chatGPTResponse.data.choices[0].message.content;
-      setChatgptText(chatGPTText);
+        const chatGPTText = chatGPTResponse.data.choices[0].message.content;
+        setChatgptText(chatGPTText);
 
-      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
-      setConversation(prev => [...prev, newAssistantMessage]);
+        const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
+        setConversation((prev) => [...prev, newAssistantMessage]);
 
-      const elevenlabsResponse = await axios.post(
-        https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000,
-        {
-          text: chatGPTText,
-          model_id: "eleven_multilingual_v2",
-          language_id: "korean",
-        },
-        {
-          headers: {
-            "xi-api-key": ${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY},
-            "Content-Type": "application/json",
+        const elevenlabsResponse = await axios.post(
+          https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000,
+          {
+            text: chatGPTText,
+            model_id: "eleven_multilingual_v2",
+            language_id: "korean",
           },
-          responseType: "arraybuffer",
+          {
+            headers: {
+              "xi-api-key": ${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY},
+              "Content-Type": "application/json",
+            },
+            responseType: "arraybuffer",
+          }
+        );
+
+        const pcm16Data = new Uint8Array(elevenlabsResponse.data);
+        console.log(pcm16Data);
+
+        const chunkSize = 6000;
+        for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+          const chunk = pcm16Data.slice(i, i + chunkSize);
+          simliClient.sendAudioData(chunk);
         }
-      );
-
-      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-      console.log(pcm16Data);
-
-      const chunkSize = 6000;
-      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-        const chunk = pcm16Data.slice(i, i + chunkSize);
-        simliClient.sendAudioData(chunk);
+      } catch (err) {
+        setError("오류가 발생했습니다. 다시 시도해주세요.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [inputText, conversation, selectedCharacter]);
+    },
+    [inputText, conversation, selectedCharacter]
+  );
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -213,8 +214,8 @@ const Demo = () => {
     silenceTimeoutRef.current = setTimeout(() => {
       if (transcriptRef.current.trim()) {
         setInputText(transcriptRef.current.trim());
-        handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
-        transcriptRef.current = '';
+        handleSubmit(new Event("submit") as unknown as React.FormEvent<HTMLFormElement>);
+        transcriptRef.current = "";
       }
     }, SILENCE_THRESHOLD);
   }, [handleSubmit]);
@@ -224,17 +225,17 @@ const Demo = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef2.current = new MediaRecorder(stream);
 
-      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
-        'token',
-        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'YOUR_DEEPGRAM_API_KEY',
-      ]);
+      socketRef.current = new WebSocket(
+        "wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500",
+        ["token", process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || "YOUR_DEEPGRAM_API_KEY"]
+      );
 
       socketRef.current.onopen = () => {
-        console.log('WebSocket connection opened');
+        console.log("WebSocket connection opened");
         setIsListening(true);
 
         if (mediaRecorderRef2.current) {
-          mediaRecorderRef2.current.addEventListener('dataavailable', (event) => {
+          mediaRecorderRef2.current.addEventListener("dataavailable", (event) => {
             if (socketRef.current?.readyState === WebSocket.OPEN) {
               socketRef.current.send(event.data);
             }
@@ -258,18 +259,18 @@ const Demo = () => {
       };
 
       socketRef.current.onclose = () => {
-        console.log('WebSocket connection closed');
+        console.log("WebSocket connection closed");
         setIsListening(false);
       };
 
       socketRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setError('WebSocket 연결 오류');
+        console.error("WebSocket error:", error);
+        setError("WebSocket 연결 오류");
         setIsListening(false);
       };
     } catch (error) {
-      console.error('Error accessing microphone:', error);
-      setError('마이크 접근 오류');
+      console.error("마이크 접근 오류:", error);
+      setError("마이크 접근 오류");
     }
   };
 
@@ -296,11 +297,11 @@ const Demo = () => {
       // 비디오 스트림과 오디오 스트림 결합
       const combinedStream = new MediaStream([
         ...videoStream.getVideoTracks(),
-        ...audioStream.getAudioTracks()
+        ...audioStream.getAudioTracks(),
       ]);
 
       // MediaRecorder 생성
-      mediaRecorderRef.current = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9,opus' });
+      mediaRecorderRef.current = new MediaRecorder(combinedStream, { mimeType: "video/webm; codecs=vp9,opus" });
       const localRecordedBlobs: Blob[] = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -310,7 +311,7 @@ const Demo = () => {
       };
 
       mediaRecorderRef.current.onstop = () => {
-        const superBuffer = new Blob(localRecordedBlobs, { type: 'video/webm' });
+        const superBuffer = new Blob(localRecordedBlobs, { type: "video/webm" });
         const url = window.URL.createObjectURL(superBuffer);
         setRecordedBlobs(localRecordedBlobs);
         downloadUrlRef.current = url;
@@ -318,25 +319,25 @@ const Demo = () => {
       };
 
       mediaRecorderRef.current.start();
-      console.log('Recording started');
+      console.log("Recording started");
     } else {
-      console.error('비디오 또는 오디오 요소를 찾을 수 없습니다.');
+      console.error("비디오 또는 오디오 요소를 찾을 수 없습니다.");
     }
   };
 
   const stopRecording = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
-      console.log('Recording stopped');
+      console.log("Recording stopped");
     }
   };
 
   const handleDownload = () => {
     if (downloadUrlRef.current) {
-      const a = document.createElement('a');
-      a.style.display = 'none';
+      const a = document.createElement("a");
+      a.style.display = "none";
       a.href = downloadUrlRef.current;
-      a.download = 'response.webm';
+      a.download = "response.webm";
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(downloadUrlRef.current);
@@ -354,8 +355,7 @@ const Demo = () => {
       simliClient.sendAudioData(audioData);
     }, 4000);
 
-    audioContext.current = new (window.AudioContext ||
-      (window as any).webkitAudioContext)();
+    audioContext.current = new (window.AudioContext || (window as any).webkitAudioContext)();
     return () => {
       if (audioContext.current) {
         audioContext.current.close();
@@ -379,13 +379,7 @@ const Demo = () => {
     <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
       <div className="w-full max-w-[512px] h-auto flex flex-col justify-center items-center gap-4">
         <div className="relative w-full aspect-video">
-          <video
-            ref={videoRef}
-            id="simli_video"
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          ></video>
+          <video ref={videoRef} id="simli_video" autoPlay playsInline className="w-full h-full object-cover"></video>
           <audio ref={audioRef} id="simli_audio" autoPlay></audio>
         </div>
         {startWebRTC ? (
@@ -416,7 +410,10 @@ const Demo = () => {
             {showConversation && (
               <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto text-sm sm:text-base">
                 {conversation.slice(1).map((message, index) => (
-                  <div key={index} className={mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}}>
+                  <div
+                    key={index}
+                    className={mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}}
+                  >
                     <strong>{message.role === "user" ? "당신: " : "지니 자비스: "}</strong>
                     {message.content}
                   </div>
@@ -425,9 +422,11 @@ const Demo = () => {
               </div>
             )}
             <div>
-              <p className="text-sm sm:text-base">{isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}</p>
+              <p className="text-sm sm:text-base">
+                {isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}
+              </p>
             </div>
-            {/* 추가된 부분: 다운로드 버튼 */}
+            {/* 다운로드 버튼 */}
             {downloadUrl && (
               <button
                 onClick={handleDownload}
@@ -452,5 +451,4 @@ const Demo = () => {
 };
 
 export default Demo;
-
               
