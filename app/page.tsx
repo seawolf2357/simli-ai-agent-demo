@@ -95,6 +95,7 @@ const Demo = () => {
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const webmRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const SILENCE_THRESHOLD = 500;
 
@@ -180,13 +181,7 @@ const Demo = () => {
 
   const downloadWebM = (blob: Blob) => {
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.style.display = 'none';
-    a.href = url;
-    a.download = 'response.webm';
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
+    setVideoUrl(url);
   };
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -419,6 +414,18 @@ return (
               {isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}
             </p>
           </div>
+          {videoUrl && (
+            <div className="w-full mt-4">
+              <video src={videoUrl} controls className="w-full"></video>
+              <a
+                href={videoUrl}
+                download="response.webm"
+                className="w-full bg-blue-500 text-white py-2 px-4 mt-2 text-center block rounded hover:bg-blue-600"
+              >
+                Download Response Video
+              </a>
+            </div>
+          )}
         </>
       ) : (
         <button
@@ -434,4 +441,4 @@ return (
 );
 };
 
-export default Demo;
+export default Demo;  
