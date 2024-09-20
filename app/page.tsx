@@ -4,6 +4,16 @@ import axios from "axios";
 import { SimliClient } from "simli-client";
 import Image from "next/image";
 
+// 타입 정의 추가
+declare global {
+  interface HTMLVideoElement {
+    captureStream(): MediaStream;
+  }
+  interface HTMLAudioElement {
+    captureStream(): MediaStream;
+  }
+}
+
 interface Character {
   name: string;
   image: string;
@@ -105,7 +115,7 @@ const Demo = () => {
     return () => {
       simliClient.close();
     };
-  }, [selectedCharacter, videoRef, audioRef]);
+  }, [selectedCharacter]);
 
   useEffect(() => {
     simliClient.on("connected", () => {
@@ -132,7 +142,7 @@ const Demo = () => {
     }
   }, [conversation]);
 
-  const startRecording = () => {
+  const startRecording = useCallback(() => {
     if (videoRef.current && audioRef.current) {
       const videoStream = videoRef.current.captureStream();
       const audioStream = audioRef.current.captureStream();
@@ -159,14 +169,14 @@ const Demo = () => {
       webmRecorderRef.current.start();
       setIsRecording(true);
     }
-  };
+  }, []);
 
-  const stopRecording = () => {
+  const stopRecording = useCallback(() => {
     if (webmRecorderRef.current && isRecording) {
       webmRecorderRef.current.stop();
       setIsRecording(false);
     }
-  };
+  }, [isRecording]);
 
   const downloadWebM = (blob: Blob) => {
     const url = window.URL.createObjectURL(blob);
@@ -241,7 +251,7 @@ const Demo = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+  }, [inputText, conversation, selectedCharacter]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -254,7 +264,7 @@ const Demo = () => {
         transcriptRef.current = '';
       }
     }, SILENCE_THRESHOLD);
-  }, [handleSubmit, setInputText]);
+  }, [handleSubmit]);
 
   const startListening = async () => {
     try {
@@ -356,72 +366,72 @@ const Demo = () => {
   }
 
 return (
-    <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
-      <div className="w-full max-w-[512px] h-auto flex flex-col justify-center items-center gap-4">
-        <div className="relative w-full aspect-video">
-          <video
-            ref={videoRef}
-            id="simli_video"
-            autoPlay
-            playsInline
-            className="w-full h-full object-cover"
-          ></video>
-          <audio ref={audioRef} id="simli_audio" autoPlay></audio>
-        </div>
-        {startWebRTC ? (
-          <>
-            {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
-            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
-              <input
-                type="text"
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                placeholder="Enter your message"
-                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
-              />
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50"
-              >
-                {isLoading ? "Processing..." : "Send"}
-              </button>
-            </form>
-            <button
-              onClick={toggleConversation}
-              className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-            >
-              {showConversation ? "Hide Conversation" : "Show Conversation"}
-            </button>
-            {showConversation && (
-              <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto text-sm sm:text-base">
-                {conversation.slice(1).map((message, index) => (
-                  <div key={index} className={`mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}`}>
-                    <strong>{message.role === "user" ? "You: " : "Assistant: "}</strong>
-                    {message.content}
-                  </div>
-                ))}
-                <div ref={conversationEndRef} />
-              </div>
-            )}
-            <div>
-              <p className="text-sm sm:text-base">
-                {isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}
-              </p>
-            </div>
-          </>
-        ) : (
-          <button
-            onClick={handleStart}
-            className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-          >
-            Start
-          </button>
-        )}
-        {error && <p className="mt-4 text-red-500 text-sm sm:text-base">{error}</p>}
+  <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
+    <div className="w-full max-w-[512px] h-auto flex flex-col justify-center items-center gap-4">
+      <div className="relative w-full aspect-video">
+        <video
+          ref={videoRef}
+          id="simli_video"
+          autoPlay
+          playsInline
+          className="w-full h-full object-cover"
+        ></video>
+        <audio ref={audioRef} id="simli_audio" autoPlay></audio>
       </div>
+      {startWebRTC ? (
+        <>
+          {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
+          <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Enter your message"
+              className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
+            />
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50"
+            >
+              {isLoading ? "Processing..." : "Send"}
+            </button>
+          </form>
+          <button
+            onClick={toggleConversation}
+            className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+          >
+            {showConversation ? "Hide Conversation" : "Show Conversation"}
+          </button>
+          {showConversation && (
+            <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto text-sm sm:text-base">
+              {conversation.slice(1).map((message, index) => (
+                <div key={index} className={`mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}`}>
+                  <strong>{message.role === "user" ? "You: " : "Assistant: "}</strong>
+                  {message.content}
+                </div>
+              ))}
+              <div ref={conversationEndRef} />
+            </div>
+          )}
+          <div>
+            <p className="text-sm sm:text-base">
+              {isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}
+            </p>
+          </div>
+        </>
+      ) : (
+        <button
+          onClick={handleStart}
+          className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+        >
+          Start
+        </button>
+      )}
+      {error && <p className="mt-4 text-red-500 text-sm sm:text-base">{error}</p>}
     </div>
-  );
+  </div>
+);
 };
 
 export default Demo;
