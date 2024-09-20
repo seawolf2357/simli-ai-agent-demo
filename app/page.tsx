@@ -161,17 +161,6 @@ const Demo = () => {
         }
       };
 
-      webmRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        chunksRef.current = [];
-        const url = window.URL.createObjectURL(blob);
-        setConversation(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1].videoUrl = url;
-          return updated;
-        });
-      };
-
       webmRecorderRef.current.start();
       setIsRecording(true);
     }
@@ -183,6 +172,27 @@ const Demo = () => {
       setIsRecording(false);
     }
   }, [isRecording]);
+
+  const handleRecordingStop = useCallback((blob: Blob) => {
+    const url = window.URL.createObjectURL(blob);
+    setConversation(prev => {
+      const updated = [...prev];
+      if (updated[updated.length - 1].role === 'assistant') {
+        updated[updated.length - 1].videoUrl = url;
+      }
+      return updated;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (webmRecorderRef.current) {
+      webmRecorderRef.current.onstop = () => {
+        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+        chunksRef.current = [];
+        handleRecordingStop(blob);
+      };
+    }
+  }, [handleRecordingStop]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
