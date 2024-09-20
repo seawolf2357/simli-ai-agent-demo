@@ -22,7 +22,7 @@ const characters: Character[] = [
     name: "Woman",
     image: "/media/woman1.png",
     faceId: "3352626b-c78a-4a0f-9210-df0c3f54dd70",
-    voiceId: "jsCqWAovK2LkecY7zXl4"
+    voiceId: "ThT5KcBeYPX3keUQqHPh"
   }
 ];
 
