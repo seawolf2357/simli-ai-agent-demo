@@ -26,7 +26,7 @@ const characters: Character[] = [
   },
   {
     name: "Caster",
-    image: "/media/caster.png",
+    image: "/media/caster.webp",
     faceId: "102e7e6e-4216-4967-bd24-7ba68032f57f",
     voiceId: "jsCqWAovK2LkecY7zXl4"
   },
