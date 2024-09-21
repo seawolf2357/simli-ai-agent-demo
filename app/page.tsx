@@ -15,7 +15,7 @@ const characters: Character[] = [
   {
     name: "Man",
     image: "/media/man1.png",
-    faceId: "74bf81fc-853f-41f6-aaa8-a8772d784327",
+    faceId: "134ebe6a-d3d2-417e-b04b-ff6a02ed8c14",
     voiceId: "1W00IGEmNmwmsDeYy7ag"
   },
   {
