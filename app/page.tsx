@@ -28,11 +28,11 @@ const characters: Character[] = [
     systemPrompt: `당신은 '지니 에이다'라는 이름의 여성 AI 비서입니다. 당신은 친절하고 공감적이며, 사용자의 질문에 따뜻하고 도움이 되는 답변을 제공합니다. 한국어로 의사소통하며, 사용자가 편안함을 느낄 수 있도록 대화를 이끕니다.`
   },
   {
-    name: "SOPHIA",
+    name: "RUBY",
     image: "/media/girl.png",
     faceId: "7d2bff31-d486-491a-b551-766ecffc635f",
-    voiceId: "ThT5KcBeYPX3keUQqHPh",
-    systemPrompt: `당신은 '지니 소피아'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다.`
+    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
+    systemPrompt: `당신은 '지니 루비'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다.`
   },
   {
     name: "ANA",
