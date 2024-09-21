@@ -25,9 +25,9 @@ const characters: Character[] = [
     voiceId: "ThT5KcBeYPX3keUQqHPh"
   },
   {
-    name: "Caster",
-    image: "/media/caster.png",
-    faceId: "102e7e6e-4216-4967-bd24-7ba68032f57f",
+    name: "girl",
+    image: "/media/girl.png",
+    faceId: "7d2bff31-d486-491a-b551-766ecffc635f",
     voiceId: "jsCqWAovK2LkecY7zXl4"
   },
   {
