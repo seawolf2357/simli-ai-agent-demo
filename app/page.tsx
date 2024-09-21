@@ -31,14 +31,14 @@ const characters: Character[] = [
     name: "SOPHIA",
     image: "/media/girl.png",
     faceId: "7d2bff31-d486-491a-b551-766ecffc635f",
-    voiceId: "jsCqWAovK2LkecY7zXl4",
+    voiceId: "ThT5KcBeYPX3keUQqHPh",
     systemPrompt: `당신은 '지니 소피아'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다.`
   },
   {
     name: "ANA",
     image: "/media/ana1.png",
     faceId: "292f9b11-18a0-4fb2-8840-765401961a80",
-    voiceId: "jsCqWAovK2LkecY7zXl4",
+    voiceId: "ThT5KcBeYPX3keUQqHPh",
     systemPrompt: `당신은 '지니 안나'라는 이름의 AI 조수입니다. 당신은 분석적이고 논리적이며, 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다.`
   }
 ];
