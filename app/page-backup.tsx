@@ -15,7 +15,7 @@ const characters: Character[] = [
   {
     name: "Man",
     image: "/media/man1.png",
-    faceId: "74bf81fc-853f-41f6-aaa8-a8772d784327",
+    faceId: "134ebe6a-d3d2-417e-b04b-ff6a02ed8c14",
     voiceId: "1W00IGEmNmwmsDeYy7ag"
   },
   {
@@ -23,6 +23,18 @@ const characters: Character[] = [
     image: "/media/woman1.png",
     faceId: "3352626b-c78a-4a0f-9210-df0c3f54dd70",
     voiceId: "ThT5KcBeYPX3keUQqHPh"
+  },
+  {
+    name: "girl",
+    image: "/media/girl.png",
+    faceId: "7d2bff31-d486-491a-b551-766ecffc635f",
+    voiceId: "jsCqWAovK2LkecY7zXl4"
+  },
+  {
+    name: "Ana1",
+    image: "/media/ana1.png",
+    faceId: "292f9b11-18a0-4fb2-8840-765401961a80",
+    voiceId: "jsCqWAovK2LkecY7zXl4"
   }
 ];
 
@@ -39,7 +51,7 @@ const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }>
   return (
     <div className="flex flex-col items-center space-y-4">
       <h2 className="text-2xl font-bold mb-4">캐릭터를 선택하세요</h2>
-      <div className="flex space-x-4">
+      <div className="flex flex-wrap justify-center gap-4">
         {characters.map((character) => (
           <div key={character.name} className="flex flex-col items-center">
             <div className="w-32 h-32 relative cursor-pointer hover:opacity-80" onClick={() => onSelect(character)}>
