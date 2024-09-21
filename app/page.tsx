@@ -23,6 +23,18 @@ const characters: Character[] = [
     image: "/media/woman1.png",
     faceId: "3352626b-c78a-4a0f-9210-df0c3f54dd70",
     voiceId: "ThT5KcBeYPX3keUQqHPh"
+  },
+  {
+    name: "Caster",
+    image: "/media/caster.png",
+    faceId: "102e7e6e-4216-4967-bd24-7ba68032f57f",
+    voiceId: "jsCqWAovK2LkecY7zXl4"
+  },
+  {
+    name: "Ana1",
+    image: "/media/ana1.png",
+    faceId: "292f9b11-18a0-4fb2-8840-765401961a80",
+    voiceId: "jsCqWAovK2LkecY7zXl4"
   }
 ];
 
@@ -39,7 +51,7 @@ const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }>
   return (
     <div className="flex flex-col items-center space-y-4">
       <h2 className="text-2xl font-bold mb-4">캐릭터를 선택하세요</h2>
-      <div className="flex space-x-4">
+      <div className="flex flex-wrap justify-center gap-4">
         {characters.map((character) => (
           <div key={character.name} className="flex flex-col items-center">
             <div className="w-32 h-32 relative cursor-pointer hover:opacity-80" onClick={() => onSelect(character)}>
