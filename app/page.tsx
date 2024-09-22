@@ -15,7 +15,7 @@ interface Character {
 const characters: Character[] = [
   {
     name: "JAVIS",
-    image: "/media/man1.png",
+    image: "/media/man2.png",
     faceId: "74bf81fc-853f-41f6-aaa8-a8772d784327",
     voiceId: "1W00IGEmNmwmsDeYy7ag",
     systemPrompt: `당신은 '지니 자비스'라는 이름의 남성 AI 비서입니다. 당신은 전문적이고 지적이며, 간결하고 정보가 풍부한 대답을 제공합니다. 한국어로 의사소통하며, 항상 정중하고 존중하는 태도를 유지합니다. 당신의 목표는 사용자에게 최선의 지원을 제공하는 것입니다.`
@@ -31,7 +31,7 @@ const characters: Character[] = [
     name: "RUBY",
     image: "/media/girl2.png",
     faceId: "1cb4eb44-caf2-4671-80a5-09a76686da14",
-    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
+    voiceId: "ThT5KcBeYPX3keUQqHPh",
     systemPrompt: `당신은 '지니 루비'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다.`
   },
   {
