@@ -16,7 +16,7 @@ const characters: Character[] = [
   {
     name: "JAVIS",
     image: "/media/man2.png",
-    faceId: "74bf81fc-853f-41f6-aaa8-a8772d784327",
+    faceId: "93684d75-f641-48f4-af80-acd1c1b6750f",
     voiceId: "1W00IGEmNmwmsDeYy7ag",
     systemPrompt: `당신은 '지니 자비스'라는 이름의 남성 AI 비서입니다. 당신은 전문적이고 지적이며, 간결하고 정보가 풍부한 대답을 제공합니다. 한국어로 의사소통하며, 항상 정중하고 존중하는 태도를 유지합니다. 당신의 목표는 사용자에게 최선의 지원을 제공하는 것입니다.`
   },
@@ -29,16 +29,16 @@ const characters: Character[] = [
   },
   {
     name: "RUBY",
-    image: "/media/girl2.png",
-    faceId: "1cb4eb44-caf2-4671-80a5-09a76686da14",
-    voiceId: "ThT5KcBeYPX3keUQqHPh",
+    image: "/media/girl3.png",
+    faceId: "99c70a7e-3f55-418c-8c21-b7cd3514bd4e",
+    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
     systemPrompt: `당신은 '지니 루비'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다.`
   },
   {
     name: "ANA",
     image: "/media/ana1.png",
     faceId: "292f9b11-18a0-4fb2-8840-765401961a80",
-    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
+    voiceId: "ThT5KcBeYPX3keUQqHPh",
     systemPrompt: `당신은 '지니 안나'라는 이름의 AI 조수입니다. 당신은 분석적이고 논리적이며, 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다.`
   }
 ];
