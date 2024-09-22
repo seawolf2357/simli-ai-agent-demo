@@ -66,12 +66,15 @@ interface Message {
 
 const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }> = ({ onSelect }) => {
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className="flex flex-col items-center space-y-4 w-full max-w-4xl">
       <h2 className="text-2xl font-bold mb-4">캐릭터를 선택하세요</h2>
-      <div className="flex flex-wrap justify-center gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 w-full">
         {characters.map((character) => (
           <div key={character.name} className="flex flex-col items-center">
-            <div className="w-32 h-32 relative cursor-pointer hover:opacity-80" onClick={() => onSelect(character)}>
+            <div 
+              className="w-24 h-24 sm:w-32 sm:h-32 relative cursor-pointer hover:opacity-80 transition-opacity duration-200" 
+              onClick={() => onSelect(character)}
+            >
               <Image
                 src={character.image}
                 alt={character.name}
@@ -80,7 +83,7 @@ const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }>
                 className="rounded-full"
               />
             </div>
-            <p className="mt-2">{character.name}</p>
+            <p className="mt-2 text-center text-sm sm:text-base">{character.name}</p>
           </div>
         ))}
       </div>
