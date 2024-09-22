@@ -175,60 +175,57 @@ const Demo = () => {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim() === "" || !selectedCharacter) return;
-
+  
     setIsLoading(true);
     setError("");
-
-    // Check if the input starts with "전송하라"
-    if (inputText.startsWith("전송하라")) {
-      const textToSend = inputText.slice(5).trim(); // Remove "전송하라" and trim
-      if (textToSend) {
-        const success = await sendWebhook(textToSend);
-        if (success) {
-          setChatgptText("전송을 완료 하였습니다.");
-          const newUserMessage: Message = { role: "user", content: inputText };
-          const newAssistantMessage: Message = { role: "assistant", content: "전송을 완료 하였습니다." };
-          setConversation(prev => [...prev, newUserMessage, newAssistantMessage]);
-        } else {
-          setError("전송 중 오류가 발생했습니다.");
-        }
-      } else {
-        setError("전송할 텍스트가 없습니다.");
-      }
-      setIsLoading(false);
-      setInputText("");
-      return;
-    }
-
+  
     const newUserMessage: Message = { role: "user", content: inputText };
     setConversation(prev => [...prev, newUserMessage]);
     setInputText("");
-
+  
     try {
-      const chatGPTResponse = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4o-mini",
-          messages: conversation.concat(newUserMessage),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
+      let responseText = "";
+  
+      // Check if the input starts with "전송하라"
+      if (inputText.startsWith("전송하라")) {
+        const textToSend = inputText.slice(5).trim(); // Remove "전송하라" and trim
+        if (textToSend) {
+          const success = await sendWebhook(textToSend);
+          if (success) {
+            responseText = "전송을 완료 하였습니다.";
+          } else {
+            responseText = "전송 중 오류가 발생했습니다.";
+          }
+        } else {
+          responseText = "전송할 텍스트가 없습니다.";
         }
-      );
-
-      const chatGPTText = chatGPTResponse.data.choices[0].message.content;
-      setChatgptText(chatGPTText);
-
-      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
+      } else {
+        // Existing code for non-"전송하라" messages
+        const chatGPTResponse = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o-mini",
+            messages: conversation.concat(newUserMessage),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        responseText = chatGPTResponse.data.choices[0].message.content;
+      }
+  
+      setChatgptText(responseText);
+      const newAssistantMessage: Message = { role: "assistant", content: responseText };
       setConversation(prev => [...prev, newAssistantMessage]);
-
+  
+      // Generate audio response for all messages, including "전송하라" responses
       const elevenlabsResponse = await axios.post(
         `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
         {
-          text: chatGPTText,
+          text: responseText,
           model_id: "eleven_multilingual_v2",
           language_id: "korean",
         },
@@ -240,10 +237,10 @@ const Demo = () => {
           responseType: "arraybuffer",
         }
       );
-
+  
       const pcm16Data = new Uint8Array(elevenlabsResponse.data);
       console.log(pcm16Data);
-
+  
 const chunkSize = 6000;
       for (let i = 0; i < pcm16Data.length; i += chunkSize) {
         const chunk = pcm16Data.slice(i, i + chunkSize);
