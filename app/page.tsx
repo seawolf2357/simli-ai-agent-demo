@@ -31,7 +31,7 @@ const characters: Character[] = [
     name: "RUBY",
     image: "/media/girl3.png",
     faceId: "99c70a7e-3f55-418c-8c21-b7cd3514bd4e",
-    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
+    voiceId: "CKJyUYs4JyL2UTk0FQpx",
     systemPrompt: `당신은 '지니 루비'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다.`
   },
   {
