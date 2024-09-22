@@ -162,7 +162,6 @@ const Demo = () => {
     }
   }, [conversation]);
 
-const musicFiles = ["/song1.mp3", "/song2.mp3", "/song3.mp3"]; // public 폴더 내 경로로 수정
 
 const playRandomMusic = useCallback(() => {
   const randomSong = musicFiles[Math.floor(Math.random() * musicFiles.length)];
@@ -266,21 +265,23 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
       const chunk = pcm16Data.slice(i, i + chunkSize);
       simliClient.sendAudioData(chunk);
     }
-  } catch (error) {
-    console.error("Error in API call:", error);
-    setError("API 호출 중 오류가 발생했습니다.");
-  } finally {
-    setIsLoading(false);
-  }
+// handleSubmit 함수의 끝 부분 수정 (불필요한 코드 제거)
+} catch (error) {
+  console.error("Error in API call:", error);
+  setError("API 호출 중 오류가 발생했습니다.");
+} finally {
+  setIsLoading(false);
+}
 }, [inputText, selectedCharacter, conversation, handleMusicCommand, setConversation, setChatgptText, setError, setIsLoading, setInputText]);
 
-// JSX에서 오디오 요소
+// JSX 내 오디오 요소 추가 (return 문 내부의 적절한 위치에)
 <audio 
   ref={audioPlayerRef} 
   onError={(e) => console.error("Audio error:", e)} 
   onPlay={() => console.log("Audio started playing")}
 />
 
+  
 const elevenlabsResponse = await axios.post(
   `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
   {
