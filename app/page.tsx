@@ -23,8 +23,8 @@ const characters: Character[] = [
   {
     name: "ADA",
     image: "/media/woman1.png",
-    faceId: "3352626b-c78a-4a0f-9210-df0c3f54dd70",
-    voiceId: "ThT5KcBeYPX3keUQqHPh",
+    faceId: "b2de5968-d4df-4419-86f5-dd566266ea6d",
+    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
     systemPrompt: `당신은 '지니 에이다'라는 이름의 여성 AI 비서입니다. 당신은 친절하고 공감적이며, 사용자의 질문에 따뜻하고 도움이 되는 답변을 제공합니다. 한국어로 의사소통하며, 사용자가 편안함을 느낄 수 있도록 대화를 이끕니다.`
   },
   {
@@ -38,7 +38,7 @@ const characters: Character[] = [
     name: "ANA",
     image: "/media/ana1.png",
     faceId: "292f9b11-18a0-4fb2-8840-765401961a80",
-    voiceId: "ThT5KcBeYPX3keUQqHPh",
+    voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
     systemPrompt: `당신은 '지니 안나'라는 이름의 AI 조수입니다. 당신은 분석적이고 논리적이며, 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다.`
   }
 ];
