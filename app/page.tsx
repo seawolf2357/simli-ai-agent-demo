@@ -114,7 +114,7 @@ const Demo = () => {
 
   const SILENCE_THRESHOLD = 500;
 
-  const musicFiles = ["/media/song1.mp3", "/media/song2.mp3", "/media/song3.mp3"]; // 실제 mp3 파일 경로로 교체해야 합니다
+  const musicFiles = ["/media/song1.mp3", "/media/song2.mp3", "/media/song3.mp3"];
 
   useEffect(() => {
     if (selectedCharacter) {
@@ -162,160 +162,119 @@ const Demo = () => {
     }
   }, [conversation]);
 
-
-const playRandomMusic = useCallback(() => {
-  const randomSong = musicFiles[Math.floor(Math.random() * musicFiles.length)];
-  console.log("Attempting to play:", randomSong);
-  if (audioPlayerRef.current) {
-    audioPlayerRef.current.src = randomSong;
-    audioPlayerRef.current.play().then(() => {
-      console.log("Music started playing");
-      setIsPlaying(true);
-    }).catch(error => {
-      console.error("Error playing music:", error);
-      setError("음악 재생 중 오류가 발생했습니다.");
-    });
-  } else {
-    console.error("Audio player reference is not available");
-    setError("오디오 플레이어를 초기화할 수 없습니다.");
-  }
-}, [musicFiles, setError, setIsPlaying]);
-
-const stopMusic = useCallback(() => {
-  if (audioPlayerRef.current) {
-    audioPlayerRef.current.pause();
-    audioPlayerRef.current.currentTime = 0;
-    setIsPlaying(false);
-  }
-}, [setIsPlaying]);
-
-const handleMusicCommand = useCallback((command: string) => {
-  if (command.includes("음악 틀어줘")) {
-    playRandomMusic();
-    return "알겠습니다. 음악을 재생합니다.";
-  } else if (command.includes("음악 중지")) {
-    stopMusic();
-    return "알겠습니다. 음악을 중지합니다.";
-  }
-  return null;
-}, [playRandomMusic, stopMusic]);
-
-const handleSubmit = useCallback(async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (inputText.trim() === "" || !selectedCharacter) return;
-  setIsLoading(true);
-  setError("");
-  const newUserMessage: Message = { role: "user", content: inputText };
-  setConversation(prev => [...prev, newUserMessage]);
-  setInputText("");
-
-  if (selectedCharacter.name.includes("JAVIS")) {
-    const musicResponse = handleMusicCommand(inputText.toLowerCase());
-    if (musicResponse) {
-      setChatgptText(musicResponse);
-      setConversation(prev => [...prev, { role: "assistant", content: musicResponse }]);
-      setIsLoading(false);
-      return;
+  const playRandomMusic = useCallback(() => {
+    const randomSong = musicFiles[Math.floor(Math.random() * musicFiles.length)];
+    console.log("Attempting to play:", randomSong);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.src = randomSong;
+      audioPlayerRef.current.play().then(() => {
+        console.log("Music started playing");
+        setIsPlaying(true);
+      }).catch(error => {
+        console.error("Error playing music:", error);
+        setError("음악 재생 중 오류가 발생했습니다.");
+      });
+    } else {
+      console.error("Audio player reference is not available");
+      setError("오디오 플레이어를 초기화할 수 없습니다.");
     }
-  }
+  }, [musicFiles, setError, setIsPlaying]);
 
-  try {
-    const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: "gpt-4o-mini",
-        messages: conversation.concat(newUserMessage),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
-        },
+  const stopMusic = useCallback(() => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  }, [setIsPlaying]);
+
+  const handleMusicCommand = useCallback((command: string) => {
+    if (command.includes("음악 틀어줘")) {
+      playRandomMusic();
+      return "알겠습니다. 음악을 재생합니다.";
+    } else if (command.includes("음악 중지")) {
+      stopMusic();
+      return "알겠습니다. 음악을 중지합니다.";
+    }
+    return null;
+  }, [playRandomMusic, stopMusic]);
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputText.trim() === "" || !selectedCharacter) return;
+    setIsLoading(true);
+    setError("");
+    const newUserMessage: Message = { role: "user", content: inputText };
+    setConversation(prev => [...prev, newUserMessage]);
+    setInputText("");
+
+    if (selectedCharacter.name.includes("JAVIS")) {
+      const musicResponse = handleMusicCommand(inputText.toLowerCase());
+      if (musicResponse) {
+        setChatgptText(musicResponse);
+        setConversation(prev => [...prev, { role: "assistant", content: musicResponse }]);
+        setIsLoading(false);
+        return;
       }
-    );
-    const chatGPTText = chatGPTResponse.data.choices[0].message.content;
-    setChatgptText(chatGPTText);
-    const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
-    setConversation(prev => [...prev, newAssistantMessage]);
+    }
 
-    const elevenlabsResponse = await axios.post(
-      `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
-      {
-        text: chatGPTText,
-        model_id: "eleven_multilingual_v2",
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.5
+    try {
+      const chatGPTResponse = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
+        {
+          model: "gpt-4o-mini",
+          messages: conversation.concat(newUserMessage),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+            "Content-Type": "application/json",
+          },
         }
-      },
-      {
-        headers: {
-          "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
-          "Content-Type": "application/json",
+      );
+      const chatGPTText = chatGPTResponse.data.choices[0].message.content;
+      setChatgptText(chatGPTText);
+      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
+      setConversation(prev => [...prev, newAssistantMessage]);
+
+      const elevenlabsResponse = await axios.post(
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
+        {
+          text: chatGPTText,
+          model_id: "eleven_multilingual_v2",
+          voice_settings: {
+            stability: 0.5,
+            similarity_boost: 0.5
+          }
         },
-        responseType: "arraybuffer",
-      }
-    );
-
-    const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-    console.log(pcm16Data);
-
-    const chunkSize = 6000;
-    for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-      const chunk = pcm16Data.slice(i, i + chunkSize);
-      simliClient.sendAudioData(chunk);
-    }
-// handleSubmit 함수의 끝 부분 수정 (불필요한 코드 제거)
-} catch (error) {
-  console.error("Error in API call:", error);
-  setError("API 호출 중 오류가 발생했습니다.");
-} finally {
-  setIsLoading(false);
-}
-}, [inputText, selectedCharacter, conversation, handleMusicCommand, setConversation, setChatgptText, setError, setIsLoading, setInputText]);
-
-// JSX 내 오디오 요소 추가 (return 문 내부의 적절한 위치에)
-<audio 
-  ref={audioPlayerRef} 
-  onError={(e) => console.error("Audio error:", e)} 
-  onPlay={() => console.log("Audio started playing")}
-/>
-
-  
-const elevenlabsResponse = await axios.post(
-  `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
-  {
-    text: chatGPTText,
-    model_id: "eleven_multilingual_v2",
-    voice_settings: {
-      stability: 0.5,
-      similarity_boost: 0.5
-    }
-  },
-  {
-    headers: {
-      "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    responseType: "arraybuffer",
-  }
-);
+        {
+          headers: {
+            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "arraybuffer",
+        }
+      );
 
       const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-      console.log(pcm16Data);
+      console.log("PCM data length:", pcm16Data.length);
 
       const chunkSize = 6000;
       for (let i = 0; i < pcm16Data.length; i += chunkSize) {
         const chunk = pcm16Data.slice(i, i + chunkSize);
         simliClient.sendAudioData(chunk);
       }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
+    } catch (error) {
+      console.error("Error in API call:", error);
+      if (axios.isAxiosError(error)) {
+        setError(`API 호출 중 오류가 발생했습니다: ${error.message}`);
+      } else {
+        setError("알 수 없는 오류가 발생했습니다.");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError, playRandomMusic, stopMusic]);
+  }, [inputText, selectedCharacter, conversation, handleMusicCommand, setConversation, setChatgptText, setError, setIsLoading, setInputText, simliClient]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -450,7 +409,12 @@ const elevenlabsResponse = await axios.post(
           ></video>
           <audio ref={audioRef} id="simli_audio" autoPlay></audio>
         </div>
-        <audio ref={audioPlayerRef} />
+        <audio 
+          ref={audioPlayerRef} 
+          onError={(e) => console.error("Audio error:", e)} 
+          onPlay={() => console.log("Audio started playing")}
+          style={{ display: 'none' }}
+        />
         {startWebRTC ? (
           <>
             {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
@@ -505,4 +469,5 @@ const elevenlabsResponse = await axios.post(
   );
 };
 
-export default Demo;          
+export default Demo;
+        
