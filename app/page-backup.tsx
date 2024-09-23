@@ -158,18 +158,49 @@ const Demo = () => {
     }
   }, [conversation]);
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputText.trim() === "" || !selectedCharacter) return;
-
-    setIsLoading(true);
-    setError("");
-
-    const newUserMessage: Message = { role: "user", content: inputText };
-    setConversation(prev => [...prev, newUserMessage]);
-    setInputText("");
-
+  const sendWebhook = async (text) => {
     try {
+      const response = await axios.post(
+        "https://connect.pabbly.com/workflow/sendwebhookdata/IjU3NjYwNTZkMDYzMzA0MzE1MjY0NTUzYzUxM2Ii_pc",
+        { text }
+      );
+      console.log("Webhook sent successfully:", response.data);
+      return true;
+    } catch (error) {
+      console.error("Error sending webhook:", error);
+      return false;
+    }
+  };
+
+const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (inputText.trim() === "" || !selectedCharacter) return;
+
+  setIsLoading(true);
+  setError("");
+
+  const newUserMessage: Message = { role: "user", content: inputText };
+  setConversation(prev => [...prev, newUserMessage]);
+  setInputText("");
+
+  try {
+    let responseText = "";
+
+    // Check if the input starts with "전송하라"
+    if (inputText.startsWith("전송하라")) {
+      const textToSend = inputText.slice(5).trim(); // Remove "전송하라" and trim
+      if (textToSend) {
+        const success = await sendWebhook(textToSend);
+        if (success) {
+          responseText = "전송을 완료 하였습니다.";
+        } else {
+          responseText = "전송 중 오류가 발생했습니다.";
+        }
+      } else {
+        responseText = "전송할 텍스트가 없습니다.";
+      }
+    } else {
+      // Only call ChatGPT API for non-"전송하라" messages
       const chatGPTResponse = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -183,44 +214,45 @@ const Demo = () => {
           },
         }
       );
-
-      const chatGPTText = chatGPTResponse.data.choices[0].message.content;
-      setChatgptText(chatGPTText);
-
-      const newAssistantMessage: Message = { role: "assistant", content: chatGPTText };
-      setConversation(prev => [...prev, newAssistantMessage]);
-
-      const elevenlabsResponse = await axios.post(
-        `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
-        {
-          text: chatGPTText,
-          model_id: "eleven_multilingual_v2",
-          language_id: "korean",
-        },
-        {
-          headers: {
-            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          responseType: "arraybuffer",
-        }
-      );
-
-      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-      console.log(pcm16Data);
-
-      const chunkSize = 6000;
-      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-        const chunk = pcm16Data.slice(i, i + chunkSize);
-        simliClient.sendAudioData(chunk);
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+      responseText = chatGPTResponse.data.choices[0].message.content;
     }
-  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+
+    setChatgptText(responseText);
+    const newAssistantMessage: Message = { role: "assistant", content: responseText };
+    setConversation(prev => [...prev, newAssistantMessage]);
+
+    // Generate audio response for all messages, including "전송하라" responses
+    const elevenlabsResponse = await axios.post(
+      `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
+      {
+        text: responseText,
+        model_id: "eleven_multilingual_v2",
+        language_id: "korean",
+      },
+      {
+        headers: {
+          "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    const pcm16Data = new Uint8Array(elevenlabsResponse.data);
+    console.log(pcm16Data);
+
+    const chunkSize = 6000;
+    for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+      const chunk = pcm16Data.slice(i, i + chunkSize);
+      simliClient.sendAudioData(chunk);
+    }
+  } catch (err) {
+    setError("An error occurred. Please try again.");
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+}, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -334,71 +366,71 @@ const Demo = () => {
     );
   }
 
-return (
-  <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
-    <div className="w-full max-w-[512px] h-auto flex flex-col justify-center items-center gap-4">
-      <div className="relative w-full aspect-video">
-        <video
-          ref={videoRef}
-          id="simli_video"
-          autoPlay
-          playsInline
-          className="w-full h-full object-cover"
-        ></video>
-        <audio ref={audioRef} id="simli_audio" autoPlay></audio>
-      </div>
-      {startWebRTC ? (
-        <>
-          {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
-          <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Enter your message"
-              className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
-            />
+  return (
+    <div className="bg-black w-full min-h-screen flex flex-col justify-center items-center font-mono text-white p-4">
+      <div className="w-full max-w-[512px] h-auto flex flex-col justify-center items-center gap-4">
+        <div className="relative w-full aspect-video">
+          <video
+            ref={videoRef}
+            id="simli_video"
+            autoPlay
+            playsInline
+            className="w-full h-full object-cover"
+          ></video>
+          <audio ref={audioRef} id="simli_audio" autoPlay></audio>
+        </div>
+        {startWebRTC ? (
+          <>
+            {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
+            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Enter your message"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
+              />
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50"
+              >
+                {isLoading ? "Processing..." : "Send"}
+              </button>
+            </form>
             <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black disabled:opacity-50"
+              onClick={toggleConversation}
+              className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
             >
-              {isLoading ? "Processing..." : "Send"}
+              {showConversation ? "Hide Conversation" : "Show Conversation"}
             </button>
-          </form>
-          <button
-            onClick={toggleConversation}
-            className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-          >
-            {showConversation ? "Hide Conversation" : "Show Conversation"}
-          </button>
-          {showConversation && (
-            <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto text-sm sm:text-base">
-              {conversation.slice(1).map((message, index) => (
-                <div key={index} className={`mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}`}>
-                  <strong>{message.role === "user" ? "You: " : "Assistant: "}</strong>
-                  {message.content}
-                </div>
-              ))}
-              <div ref={conversationEndRef} />
+            {showConversation && (
+              <div className="w-full mt-4 bg-gray-900 p-4 rounded-lg max-h-60 overflow-y-auto text-sm sm:text-base">
+                {conversation.slice(1).map((message, index) => (
+                  <div key={index} className={`mb-2 ${message.role === "user" ? "text-blue-400" : "text-green-400"}`}>
+                    <strong>{message.role === "user" ? "You: " : "Assistant: "}</strong>
+                    {message.content}
+                  </div>
+                ))}
+                <div ref={conversationEndRef} />
+              </div>
+            )}
+            <div>
+              <p className="text-sm sm:text-base">{isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}</p>
             </div>
-          )}
-          <div>
-            <p className="text-sm sm:text-base">{isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}</p>
-          </div>
-        </>
-      ) : (
-        <button
-          onClick={handleStart}
-          className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-        >
-          Start
-        </button>
-      )}
-      {error && <p className="mt-4 text-red-500 text-sm sm:text-base">{error}</p>}
+          </>
+        ) : (
+          <button
+            onClick={handleStart}
+            className="w-full bg-white text-black py-2 px-4 text-sm sm:text-base hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+          >
+            Start
+          </button>
+        )}
+        {error && <p className="mt-4 text-red-500 text-sm sm:text-base">{error}</p>}
+      </div>
     </div>
-  </div>
-);
+  );
 };
 
 export default Demo;
