@@ -382,13 +382,13 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         {startWebRTC ? (
           <>
             {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
+
             <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
-              <input
-                type="text"
+              <textarea
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 placeholder="Enter your message"
-                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white resize-none h-[64px]"
               />
               <button
                 type="submit"
@@ -397,7 +397,12 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
               >
                 {isLoading ? "Processing..." : "Send"}
               </button>
-            </form>
+            </form>            
+
+
+
+
+            
             <button
               onClick={toggleConversation}
               className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
