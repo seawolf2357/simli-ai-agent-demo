@@ -101,17 +101,16 @@ const Demo = () => {
   const [conversation, setConversation] = useState<Message[]>([]);
   const [showConversation, setShowConversation] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [cumulativeTranscript, setCumulativeTranscript] = useState("");
   const audioContext = useRef<AudioContext | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const cumulativeTranscriptRef = useRef("");
+  const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const SILENCE_THRESHOLD = 1500;
+  const SILENCE_THRESHOLD = 500;
 
   useEffect(() => {
     if (selectedCharacter) {
@@ -172,8 +171,6 @@ const Demo = () => {
       return false;
     }
   };
-
-// ... (이전 코드는 그대로 유지)
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
@@ -257,18 +254,15 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
   }
 }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
 
-
-
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
       clearTimeout(silenceTimeoutRef.current);
     }
     silenceTimeoutRef.current = setTimeout(() => {
-      if (cumulativeTranscriptRef.current.trim()) {
-        setInputText(cumulativeTranscriptRef.current.trim());
+      if (transcriptRef.current.trim()) {
+        setInputText(transcriptRef.current.trim());
         handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
-        cumulativeTranscriptRef.current = '';
-        setCumulativeTranscript("");
+        transcriptRef.current = '';
       }
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
@@ -280,7 +274,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
       
       socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
         'token',
-        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'your_api_key_here',
+        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
       ]);
 
       socketRef.current.onopen = () => {
@@ -301,10 +295,13 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         const received = JSON.parse(message.data);
         const transcript = received.channel.alternatives[0].transcript;
         if (transcript) {
-          cumulativeTranscriptRef.current += " " + transcript;
-          setCumulativeTranscript(cumulativeTranscriptRef.current.trim());
-          setInputText(cumulativeTranscriptRef.current.trim());
-          resetSilenceTimeout();
+          if (received.is_final) {
+            transcriptRef.current = transcript;
+            resetSilenceTimeout();
+          } else {
+            // 중간 결과를 UI에 표시
+            setInputText(transcript);
+          }
         }
       };
 
@@ -335,8 +332,6 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
       clearTimeout(silenceTimeoutRef.current);
     }
     setIsListening(false);
-    cumulativeTranscriptRef.current = '';
-    setCumulativeTranscript("");
   };
 
   const handleStart = () => {
@@ -422,9 +417,6 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
             )}
             <div>
               <p className="text-sm sm:text-base">{isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}</p>
-              {cumulativeTranscript && (
-                <p className="text-sm sm:text-base mt-2">인식된 텍스트: {cumulativeTranscript}</p>
-              )}
             </div>
           </>
         ) : (
@@ -441,4 +433,4 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
   );
 };
 
-export default Demo;    
+export default Demo;
