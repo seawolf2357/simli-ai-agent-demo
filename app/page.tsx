@@ -242,26 +242,18 @@ try {
   console.log(pcm16Data);
 
 const chunkSize = 6000;
-  for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-    const chunk = pcm16Data.slice(i, i + chunkSize);
-    simliClient.sendAudioData(chunk);
-  }
+for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+  const chunk = pcm16Data.slice(i, i + chunkSize);
+  simliClient.sendAudioData(chunk);
+}
 } catch (err) {
-  setError("An error occurred. Please try again.");
-  console.error(err);
+setError("An error occurred. Please try again.");
+console.error(err);
 } finally {
-  setIsLoading(false);
+setIsLoading(false);
 }
       
-Data(chunk);
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+}, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
