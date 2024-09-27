@@ -246,7 +246,11 @@ const Demo = () => {
         const chunk = pcm16Data.slice(i, i + chunkSize);
         simliClient.sendAudioData(chunk);
 }
+// Data(chunk); 이 줄은 불필요해 보이므로 제거합니다.
+    } catch (err) {
 
+
+      
 Data(chunk);
       }
     } catch (err) {
