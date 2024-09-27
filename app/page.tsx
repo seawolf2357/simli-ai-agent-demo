@@ -36,7 +36,7 @@ const characters: Character[] = [
   },
   {
     name: "영화배우 Cha",
-    image: "/media/cha1.png",
+    image: "/media/cha2.png",
     faceId: "4e0f192d-0ceb-448e-947f-87385bf663e0",
     voiceId: "tt6k262nVXUCyo7V4gSo",
     systemPrompt: `당신은 '미스터 차'라는 이름의 영화배우입니다. 당신은 '영화배우'로서 감성적이며 열정적입니다. 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
