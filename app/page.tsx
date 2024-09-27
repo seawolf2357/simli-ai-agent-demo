@@ -173,6 +173,8 @@ const Demo = () => {
     }
   };
 
+// ... (이전 코드는 그대로 유지)
+
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
   if (inputText.trim() === "" || !selectedCharacter) return;
@@ -244,11 +246,6 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 
     const chunkSize = 6000;
     for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-    console.log(pcm16Data);
-
-    const chunkSize = 6000;
-    for (let i = 0; i < pcm16Data.length; i += chunkSize) {
       const chunk = pcm16Data.slice(i, i + chunkSize);
       simliClient.sendAudioData(chunk);
     }
@@ -259,6 +256,8 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     setIsLoading(false);
   }
 }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+
+
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
