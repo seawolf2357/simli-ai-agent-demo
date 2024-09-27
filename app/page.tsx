@@ -241,11 +241,11 @@ const Demo = () => {
       const pcm16Data = new Uint8Array(elevenlabsResponse.data);
       console.log(pcm16Data);
 
-      const chunkSize = 6000;
+      const chunkSize = 6000;      
       for (let i = 0; i < pcm16Data.length; i += chunkSize) {
         const chunk = pcm16Data.slice(i, i + chunkSize);
-        simliClient.sendAudio
-
+        simliClient.sendAudioData(chunk);
+}
 
 Data(chunk);
       }
