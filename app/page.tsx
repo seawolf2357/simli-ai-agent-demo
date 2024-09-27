@@ -172,87 +172,90 @@ const Demo = () => {
     }
   };
 
-const handleSubmit = useCallback(async (e: React.FormEvent) => {
-  e.preventDefault();
-  if (inputText.trim() === "" || !selectedCharacter) return;
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (inputText.trim() === "" || !selectedCharacter) return;
 
-  setIsLoading(true);
-  setError("");
+    setIsLoading(true);
+    setError("");
 
-  const newUserMessage: Message = { role: "user", content: inputText };
-  setConversation(prev => [...prev, newUserMessage]);
-  setInputText("");
+    const newUserMessage: Message = { role: "user", content: inputText };
+    setConversation(prev => [...prev, newUserMessage]);
+    setInputText("");
 
-  try {
-    let responseText = "";
+    try {
+      let responseText = "";
 
-    // Check if the input starts with "전송하라"
-    if (inputText.startsWith("전송하라")) {
-      const textToSend = inputText.slice(5).trim(); // Remove "전송하라" and trim
-      if (textToSend) {
-        const success = await sendWebhook(textToSend);
-        if (success) {
-          responseText = "전송을 완료 하였습니다.";
+      // Check if the input starts with "전송하라"
+      if (inputText.startsWith("전송하라")) {
+        const textToSend = inputText.slice(5).trim(); // Remove "전송하라" and trim
+        if (textToSend) {
+          const success = await sendWebhook(textToSend);
+          if (success) {
+            responseText = "전송을 완료 하였습니다.";
+          } else {
+            responseText = "전송 중 오류가 발생했습니다.";
+          }
         } else {
-          responseText = "전송 중 오류가 발생했습니다.";
+          responseText = "전송할 텍스트가 없습니다.";
         }
       } else {
-        responseText = "전송할 텍스트가 없습니다.";
+        // Only call ChatGPT API for non-"전송하라" messages
+        const chatGPTResponse = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o-mini",
+            messages: conversation.concat(newUserMessage),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        responseText = chatGPTResponse.data.choices[0].message.content;
       }
-    } else {
-      // Only call ChatGPT API for non-"전송하라" messages
-      const chatGPTResponse = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
+
+      setChatgptText(responseText);
+      const newAssistantMessage: Message = { role: "assistant", content: responseText };
+      setConversation(prev => [...prev, newAssistantMessage]);
+
+      // Generate audio response for all messages, including "전송하라" responses
+      const elevenlabsResponse = await axios.post(
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
         {
-          model: "gpt-4o-mini",
-          messages: conversation.concat(newUserMessage),
+          text: responseText,
+          model_id: "eleven_multilingual_v2",
+          language_id: "korean",
         },
         {
           headers: {
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
             "Content-Type": "application/json",
           },
+          responseType: "arraybuffer",
         }
       );
-      responseText = chatGPTResponse.data.choices[0].message.content;
-    }
 
-    setChatgptText(responseText);
-    const newAssistantMessage: Message = { role: "assistant", content: responseText };
-    setConversation(prev => [...prev, newAssistantMessage]);
+      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
+      console.log(pcm16Data);
 
-    // Generate audio response for all messages, including "전송하라" responses
-    const elevenlabsResponse = await axios.post(
-      `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
-      {
-        text: responseText,
-        model_id: "eleven_multilingual_v2",
-        language_id: "korean",
-      },
-      {
-        headers: {
-          "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        responseType: "arraybuffer",
+      const chunkSize = 6000;
+      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+        const chunk = pcm16Data.slice(i, i + chunkSize);
+        simliClient.sendAudio
+
+
+Data(chunk);
       }
-    );
-
-    const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-    console.log(pcm16Data);
-
-    const chunkSize = 6000;
-    for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-      const chunk = pcm16Data.slice(i, i + chunkSize);
-      simliClient.sendAudioData(chunk);
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (err) {
-    setError("An error occurred. Please try again.");
-    console.error(err);
-  } finally {
-    setIsLoading(false);
-  }
-}, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -267,18 +270,25 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
 
+  const postProcessTranscript = (text: string) => {
+    // 여기에 텍스트 교정 로직을 추가할 수 있습니다.
+    // 예: 자주 발생하는 오류 수정, 특정 단어 변환 등
+    return text;
+  };
+
   const startListening = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       
-      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
+      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=nova-2&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
         'token',
         process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
       ]);
 
       socketRef.current.onopen = () => {
         console.log('WebSocket connection opened');
+        console.log('음성 인식을 시작합니다. 조용한 환경에서 마이크에 가까이 대고 말씀해 주세요.');
         setIsListening(true);
         
         if (mediaRecorderRef.current) {
@@ -296,10 +306,11 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         const transcript = received.channel.alternatives[0].transcript;
         if (transcript) {
           if (received.is_final) {
-            transcriptRef.current = transcript;
+            const processedTranscript = postProcessTranscript(transcript);
+            transcriptRef.current = processedTranscript;
+            setInputText(processedTranscript);
             resetSilenceTimeout();
           } else {
-            // 중간 결과를 UI에 표시
             setInputText(transcript);
           }
         }
@@ -387,7 +398,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Enter your message"
+                placeholder="Enter your message or edit recognized text"
                 className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
               />
               <button
@@ -416,7 +427,11 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
               </div>
             )}
             <div>
-              <p className="text-sm sm:text-base">{isListening ? "음성을 인식하고 있습니다. 질문을 말씀해 주세요." : "음성 인식이 중지되었습니다."}</p>
+              <p className="text-sm sm:text-base">
+                {isListening 
+                  ? "음성을 인식하고 있습니다. 조용한 환경에서 마이크에 가까이 대고 말씀해 주세요." 
+                  : "음성 인식이 중지되었습니다."}
+              </p>
             </div>
           </>
         ) : (
@@ -434,3 +449,8 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 };
 
 export default Demo;
+
+
+
+
+      
