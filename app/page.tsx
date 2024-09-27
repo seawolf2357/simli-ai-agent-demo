@@ -271,8 +271,8 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
-      
-      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
+
+      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=nova-2&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [      
         'token',
         process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
       ]);
