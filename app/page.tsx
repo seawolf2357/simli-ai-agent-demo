@@ -109,16 +109,12 @@ const Demo = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const formRef = useRef<HTMLFormElement>(null);
 
-  const SILENCE_THRESHOLD = 5000; // 5초
+  const SILENCE_THRESHOLD = 5000; // 5초로 증가
 
   useEffect(() => {
     if (selectedCharacter) {
-      setConversation([
-        { role: "system", content: selectedCharacter.systemPrompt },
-        { role: "assistant", content: "음성 입력후 마지막에 '실행하라'라는 명령을 발음하시면 입력이 완료됩니다." }
-      ]);
+      setConversation([{ role: "system", content: selectedCharacter.systemPrompt }]);
     }
   }, [selectedCharacter]);
 
@@ -178,23 +174,20 @@ const Demo = () => {
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
-  console.log("handleSubmit 호출됨");
-  let textToSubmit = inputText.replace(/실행하라/gi, "").trim();
-  if (textToSubmit === "" || !selectedCharacter) return;
-
+  if (inputText.trim() === "" || !selectedCharacter) return;
 
   setIsLoading(true);
   setError("");
 
-  const newUserMessage: Message = { role: "user", content: textToSubmit };
+  const newUserMessage: Message = { role: "user", content: inputText };
   setConversation(prev => [...prev, newUserMessage]);
   setInputText("");
 
   try {
     let responseText = "";
 
-    if (textToSubmit.startsWith("전송하라")) {
-      const textToSend = textToSubmit.slice(5).trim();
+    if (inputText.startsWith("전송하라")) {
+      const textToSend = inputText.slice(5).trim();
       if (textToSend) {
         const success = await sendWebhook(textToSend);
         if (success) {
@@ -272,77 +265,63 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
 
-const startListening = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRecorderRef.current = new MediaRecorder(stream);
-    
-    socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=2000', [
-      'token',
-      process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
-    ]);
-
-    socketRef.current.onopen = () => {
-      console.log('WebSocket connection opened');
-      setIsListening(true);
+  const startListening = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
       
-      if (mediaRecorderRef.current) {
-        mediaRecorderRef.current.addEventListener('dataavailable', (event) => {
-          if (socketRef.current?.readyState === WebSocket.OPEN) {
-            socketRef.current.send(event.data);
-          }
-        });
-        mediaRecorderRef.current.start(250);
-      }
-    };
+      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=2000', [
+        'token',
+        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
+      ]);
 
-    socketRef.current.onmessage = (message) => {
-      const received = JSON.parse(message.data);
-      const transcript = received.channel.alternatives[0].transcript;
-      console.log("Received transcript:", transcript);
-
-      if (transcript) {
-        if (received.is_final) {
-          transcriptRef.current += transcript + " ";
-          const fullTranscript = transcriptRef.current.trim();
-          setInputText(fullTranscript);
-          console.log("Final transcript:", fullTranscript);
-          
-          // "실행하라" 감지 로직 강화
-          if (fullTranscript.toLowerCase().includes("실행하라")) {
-            console.log("'실행하라' 감지됨");
-            setTimeout(() => {
-              console.log("폼 제출 시도");
-              handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
-            }, 100);
-          } else {
-            resetSilenceTimeout();
-          }
-        } else {
-          setInputText(prevInput => {
-            const newInput = prevInput + transcript + " ";
-            transcriptRef.current = newInput;
-            return newInput;
+      socketRef.current.onopen = () => {
+        console.log('WebSocket connection opened');
+        setIsListening(true);
+        
+        if (mediaRecorderRef.current) {
+          mediaRecorderRef.current.addEventListener('dataavailable', (event) => {
+            if (socketRef.current?.readyState === WebSocket.OPEN) {
+              socketRef.current.send(event.data);
+            }
           });
+          mediaRecorderRef.current.start(250);
         }
-      }
-    };
+      };
 
-    socketRef.current.onclose = () => {
-      console.log('WebSocket connection closed');
-      setIsListening(false);
-    };
+      socketRef.current.onmessage = (message) => {
+        const received = JSON.parse(message.data);
+        const transcript = received.channel.alternatives[0].transcript;
+        if (transcript) {
+          if (received.is_final) {
+            transcriptRef.current += transcript + " ";
+            setInputText(transcriptRef.current.trim());
+            resetSilenceTimeout();
+          } else {
+            setInputText(prevInput => {
+              const newInput = prevInput + transcript + " ";
+              transcriptRef.current = newInput;
+              return newInput;
+            });
+          }
+        }
+      };
 
-    socketRef.current.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setError('WebSocket 연결 오류');
-      setIsListening(false);
-    };
-  } catch (error) {
-    console.error('Error accessing microphone:', error);
-    setError('마이크 접근 오류');
-  }
-};
+      socketRef.current.onclose = () => {
+        console.log('WebSocket connection closed');
+        setIsListening(false);
+      };
+
+      socketRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setError('WebSocket 연결 오류');
+        setIsListening(false);
+      };
+    } catch (error) {
+      console.error('Error accessing microphone:', error);
+      setError('마이크 접근 오류');
+    }
+  };
 
   const stopListening = () => {
     if (socketRef.current) {
@@ -405,7 +384,7 @@ const startListening = async () => {
         {startWebRTC ? (
           <>
             {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
-            <form ref={formRef} onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
+            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
               <input
                 type="text"
                 value={inputText}
