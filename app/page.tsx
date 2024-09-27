@@ -93,7 +93,7 @@ const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }>
 
 const Demo = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [inputText, setInputText] = useState("");
+  const [inputText, setInputText] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [chatgptText, setChatgptText] = useState("");
@@ -174,33 +174,28 @@ const Demo = () => {
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
-  if (inputText.trim() === "" || !selectedCharacter) return;
+  if (inputText.length === 0 || !selectedCharacter) return;
 
+  const fullInputText = inputText.join(' ');
   setIsLoading(true);
   setError("");
 
-  const newUserMessage: Message = { role: "user", content: inputText };
+  const newUserMessage: Message = { role: "user", content: fullInputText };
   setConversation(prev => [...prev, newUserMessage]);
-  setInputText("");
+  setInputText([]);
 
   try {
     let responseText = "";
 
-    // Check if the input starts with "전송하라"
-    if (inputText.startsWith("전송하라")) {
-      const textToSend = inputText.slice(5).trim(); // Remove "전송하라" and trim
+    if (fullInputText.startsWith("전송하라")) {
+      const textToSend = fullInputText.slice(5).trim();
       if (textToSend) {
         const success = await sendWebhook(textToSend);
-        if (success) {
-          responseText = "전송을 완료 하였습니다.";
-        } else {
-          responseText = "전송 중 오류가 발생했습니다.";
-        }
+        responseText = success ? "전송을 완료 하였습니다." : "전송 중 오류가 발생했습니다.";
       } else {
         responseText = "전송할 텍스트가 없습니다.";
       }
     } else {
-      // Only call ChatGPT API for non-"전송하라" messages
       const chatGPTResponse = await axios.post(
         "https://api.openai.com/v1/chat/completions",
         {
@@ -221,7 +216,6 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     const newAssistantMessage: Message = { role: "assistant", content: responseText };
     setConversation(prev => [...prev, newAssistantMessage]);
 
-    // Generate audio response for all messages, including "전송하라" responses
     const elevenlabsResponse = await axios.post(
       `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
       {
@@ -260,7 +254,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     }
     silenceTimeoutRef.current = setTimeout(() => {
       if (transcriptRef.current.trim()) {
-        setInputText(transcriptRef.current.trim());
+        setInputText(prev => [...prev, transcriptRef.current.trim()]);
         handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
         transcriptRef.current = '';
       }
@@ -296,11 +290,19 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         const transcript = received.channel.alternatives[0].transcript;
         if (transcript) {
           if (received.is_final) {
+            setInputText(prev => [...prev, transcript]);
             transcriptRef.current = transcript;
             resetSilenceTimeout();
           } else {
-            // 중간 결과를 UI에 표시
-            setInputText(transcript);
+            setInputText(prev => {
+              const newInputText = [...prev];
+              if (newInputText.length === 0) {
+                newInputText.push(transcript);
+              } else {
+                newInputText[newInputText.length - 1] = transcript;
+              }
+              return newInputText;
+            });
           }
         }
       };
@@ -385,10 +387,10 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
 
             <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
               <textarea
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
+                value={inputText.join('\n')}
+                onChange={(e) => setInputText(e.target.value.split('\n'))}
                 placeholder="Enter your message"
-                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white resize-none h-[64px]"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white resize-none h-[100px]"
               />
               <button
                 type="submit"
@@ -399,10 +401,6 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
               </button>
             </form>            
 
-
-
-
-            
             <button
               onClick={toggleConversation}
               className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
