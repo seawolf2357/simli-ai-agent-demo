@@ -178,8 +178,12 @@ const Demo = () => {
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
-  let textToSubmit = inputText.replace("실행하라", "").trim();
+  console.log("handleSubmit 호출됨"); // 디버깅을 위한 로그
+  let textToSubmit = inputText.replace(/실행하라/gi, "").trim();
   if (textToSubmit === "" || !selectedCharacter) return;
+
+  // ... 나머지 코드는 그대로 유지
+
 
   setIsLoading(true);
   setError("");
@@ -270,73 +274,79 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
 
-  const startListening = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
+const startListening = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorderRef.current = new MediaRecorder(stream);
+    
+    socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=2000', [
+      'token',
+      process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
+    ]);
+
+    socketRef.current.onopen = () => {
+      console.log('WebSocket connection opened');
+      setIsListening(true);
       
-      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=2000', [
-        'token',
-        process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
-      ]);
-
-      socketRef.current.onopen = () => {
-        console.log('WebSocket connection opened');
-        setIsListening(true);
-        
-        if (mediaRecorderRef.current) {
-          mediaRecorderRef.current.addEventListener('dataavailable', (event) => {
-            if (socketRef.current?.readyState === WebSocket.OPEN) {
-              socketRef.current.send(event.data);
-            }
-          });
-          mediaRecorderRef.current.start(250);
-        }
-      };
-
-      socketRef.current.onmessage = (message) => {
-        const received = JSON.parse(message.data);
-        const transcript = received.channel.alternatives[0].transcript;
-        if (transcript) {
-          if (received.is_final) {
-            transcriptRef.current += transcript + " ";
-            setInputText(transcriptRef.current.trim());
-            
-            // "실행하라" 감지 로직
-            if (transcript.includes("실행하라")) {
-              setTimeout(() => {
-                if (formRef.current) {
-                  formRef.current.dispatchEvent(new Event('submit', { cancelable: true }));
-                }
-              }, 100); // 0.1초 지연
-            } else {
-              resetSilenceTimeout();
-            }
-          } else {
-            setInputText(prevInput => {
-              const newInput = prevInput + transcript + " ";
-              transcriptRef.current = newInput;
-              return newInput;
-            });
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.addEventListener('dataavailable', (event) => {
+          if (socketRef.current?.readyState === WebSocket.OPEN) {
+            socketRef.current.send(event.data);
           }
+        });
+        mediaRecorderRef.current.start(250);
+      }
+    };
+
+    socketRef.current.onmessage = (message) => {
+      const received = JSON.parse(message.data);
+      const transcript = received.channel.alternatives[0].transcript;
+      console.log("Received transcript:", transcript); // 디버깅을 위한 로그
+
+      if (transcript) {
+        if (received.is_final) {
+          transcriptRef.current += transcript + " ";
+          const fullTranscript = transcriptRef.current.trim();
+          setInputText(fullTranscript);
+          console.log("Final transcript:", fullTranscript); // 디버깅을 위한 로그
+          
+          // "실행하라" 감지 로직 강화
+          if (fullTranscript.toLowerCase().includes("실행하라")) {
+            console.log("'실행하라' 감지됨"); // 디버깅을 위한 로그
+            setTimeout(() => {
+              if (formRef.current) {
+                console.log("폼 제출 시도"); // 디버깅을 위한 로그
+                formRef.current.dispatchEvent(new Event('submit', { cancelable: true }));
+              }
+            }, 100);
+          } else {
+            resetSilenceTimeout();
+          }
+        } else {
+          setInputText(prevInput => {
+            const newInput = prevInput + transcript + " ";
+            transcriptRef.current = newInput;
+            return newInput;
+          });
         }
-      };
+      }
+    };
 
-      socketRef.current.onclose = () => {
-        console.log('WebSocket connection closed');
-        setIsListening(false);
-      };
+    socketRef.current.onclose = () => {
+      console.log('WebSocket connection closed');
+      setIsListening(false);
+    };
 
-      socketRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setError('WebSocket 연결 오류');
-        setIsListening(false);
-      };
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      setError('마이크 접근 오류');
-    }
-  };
+    socketRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setError('WebSocket 연결 오류');
+      setIsListening(false);
+    };
+  } catch (error) {
+    console.error('Error accessing microphone:', error);
+    setError('마이크 접근 오류');
+  }
+};
 
   const stopListening = () => {
     if (socketRef.current) {
