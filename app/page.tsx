@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import axios from "axios";
 import { SimliClient } from "simli-client";
 import Image from "next/image";
