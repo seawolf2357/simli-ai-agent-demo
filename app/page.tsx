@@ -158,6 +158,17 @@ const Demo = () => {
     }
   }, [conversation]);
 
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('');
+        restartListening();
+      }, 5000); // 5초 후 재시도
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
   const sendWebhook = async (text) => {
     try {
       const response = await axios.post(
@@ -183,77 +194,79 @@ const Demo = () => {
     setConversation(prev => [...prev, newUserMessage]);
     setInputText("");
 
-try {
-  let responseText = "";
+    try {
+      let responseText = "";
 
-  // Check if the input starts with "전송하라"
-  if (inputText.startsWith("전송하라")) {
-    const textToSend = inputText.slice(5).trim();
-    if (textToSend) {
-      const success = await sendWebhook(textToSend);
-      if (success) {
-        responseText = "전송을 완료 하였습니다.";
+      // Check if the input starts with "전송하라"
+      if (inputText.startsWith("전송하라")) {
+        const textToSend = inputText.slice(5).trim();
+        if (textToSend) {
+          const success = await sendWebhook(textToSend);
+          if (success) {
+            responseText = "전송을 완료 하였습니다.";
+          } else {
+            responseText = "전송 중 오류가 발생했습니다.";
+          }
+        } else {
+          responseText = "전송할 텍스트가 없습니다.";
+        }
       } else {
-        responseText = "전송 중 오류가 발생했습니다.";
+        // Only call ChatGPT API for non-"전송하라" messages
+        const chatGPTResponse = await axios.post(
+          "https://api.openai.com/v1/chat/completions",
+          {
+            model: "gpt-4o-mini",
+            messages: conversation.concat(newUserMessage),
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        responseText = chatGPTResponse.data.choices[0].message.content;
       }
-    } else {
-      responseText = "전송할 텍스트가 없습니다.";
-    }
-  } else {
-    // Only call ChatGPT API for non-"전송하라" messages
-    const chatGPTResponse = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        model: "gpt-4o-mini",
-        messages: conversation.concat(newUserMessage),
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
+
+      setChatgptText(responseText);
+      const newAssistantMessage: Message = { role: "assistant", content: responseText };
+      setConversation(prev => [...prev, newAssistantMessage]);
+
+      // Generate audio response for all messages, including "전송하라" responses
+      const elevenlabsResponse = await axios.post(
+        `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
+        {
+          text: responseText,
+          model_id: "eleven_multilingual_v2",
+          language_id: "korean",
         },
+        {
+          headers: {
+            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          responseType: "arraybuffer",
+        }
+      );
+
+      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
+      console.
+
+        
+log(pcm16Data);
+
+      const chunkSize = 6000;
+      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+        const chunk = pcm16Data.slice(i, i + chunkSize);
+        simliClient.sendAudioData(chunk);
       }
-    );
-    responseText = chatGPTResponse.data.choices[0].message.content;
-  }
-
-  setChatgptText(responseText);
-  const newAssistantMessage: Message = { role: "assistant", content: responseText };
-  setConversation(prev => [...prev, newAssistantMessage]);
-
-  // Generate audio response for all messages, including "전송하라" responses
-  const elevenlabsResponse = await axios.post(
-    `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
-    {
-      text: responseText,
-      model_id: "eleven_multilingual_v2",
-      language_id: "korean",
-    },
-    {
-      headers: {
-        "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      responseType: "arraybuffer",
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-  );
-
-  const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-  console.log(pcm16Data);
-
-const chunkSize = 6000;
-for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-  const chunk = pcm16Data.slice(i, i + chunkSize);
-  simliClient.sendAudioData(chunk);
-}
-} catch (err) {
-setError("An error occurred. Please try again.");
-console.error(err);
-} finally {
-setIsLoading(false);
-}
-      
-}, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
+  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -314,19 +327,22 @@ setIsLoading(false);
         }
       };
 
-      socketRef.current.onclose = () => {
-        console.log('WebSocket connection closed');
+      socketRef.current.onclose = (event) => {
+        console.log('WebSocket connection closed:', event.code, event.reason);
         setIsListening(false);
+        if (!event.wasClean) {
+          setError('WebSocket 연결이 비정상적으로 종료되었습니다.');
+        }
       };
 
       socketRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
-        setError('WebSocket 연결 오류');
+        setError('WebSocket 연결 오류: ' + error.message);
         setIsListening(false);
       };
     } catch (error) {
       console.error('Error accessing microphone:', error);
-      setError('마이크 접근 오류');
+      setError('마이크 접근 오류: ' + error.message);
     }
   };
 
@@ -341,6 +357,13 @@ setIsLoading(false);
       clearTimeout(silenceTimeoutRef.current);
     }
     setIsListening(false);
+  };
+
+  const restartListening = () => {
+    stopListening();
+    setTimeout(() => {
+      startListening();
+    }, 1000); // 1초 후 재시작
   };
 
   const handleStart = () => {
@@ -430,6 +453,14 @@ setIsLoading(false);
                   ? "음성을 인식하고 있습니다. 조용한 환경에서 마이크에 가까이 대고 말씀해 주세요." 
                   : "음성 인식이 중지되었습니다."}
               </p>
+              {!isListening && (
+                <button
+                  onClick={restartListening}
+                  className="mt-2 bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-600"
+                >
+                  음성 인식 재시작
+                </button>
+              )}
             </div>
           </>
         ) : (
@@ -447,8 +478,6 @@ setIsLoading(false);
 };
 
 export default Demo;
-
-
 
 
       
