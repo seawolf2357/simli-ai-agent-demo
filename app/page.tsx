@@ -112,11 +112,16 @@ const Demo = () => {
 
   const SILENCE_THRESHOLD = 500;
 
-  useEffect(() => {
-    if (selectedCharacter) {
-      setConversation([{ role: "system", content: selectedCharacter.systemPrompt }]);
-    }
-  }, [selectedCharacter]);
+useEffect(() => {
+  if (error) {
+    const timer = setTimeout(() => {
+      setError('');
+      restartListening();
+    }, 5000); // 5초 후 재시도
+
+    return () => clearTimeout(timer);
+  }
+}, [error, restartListening]);
 
   useEffect(() => {
     if (selectedCharacter && videoRef.current && audioRef.current) {
@@ -297,10 +302,12 @@ log(pcm16Data);
         process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
       ]);
 
-      socketRef.current.onopen = () => {
-        console.log('WebSocket connection opened');
-        console.log('음성 인식을 시작합니다. 조용한 환경에서 마이크에 가까이 대고 말씀해 주세요.');
-        setIsListening(true);
+socketRef.current.onerror = (event: Event) => {
+  const error = event as ErrorEvent;
+  console.error('WebSocket error:', error);
+  setError('WebSocket 연결 오류: ' + (error.message || '알 수 없는 오류'));
+  setIsListening(false);
+};
         
         if (mediaRecorderRef.current) {
           mediaRecorderRef.current.addEventListener('dataavailable', (event) => {
@@ -359,12 +366,12 @@ log(pcm16Data);
     setIsListening(false);
   };
 
-  const restartListening = () => {
-    stopListening();
-    setTimeout(() => {
-      startListening();
-    }, 1000); // 1초 후 재시작
-  };
+const restartListening = useCallback(() => {
+  stopListening();
+  setTimeout(() => {
+    startListening();
+  }, 1000); // 1초 후 재시작
+}, [stopListening, startListening]);
 
   const handleStart = () => {
     simliClient.start();
