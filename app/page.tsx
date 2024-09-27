@@ -18,42 +18,42 @@ const characters: Character[] = [
     image: "/media/man2.png",
     faceId: "93684d75-f641-48f4-af80-acd1c1b6750f",
     voiceId: "1W00IGEmNmwmsDeYy7ag",
-    systemPrompt: `당신은 '지니 자비스'라는 이름의 남성 AI 비서입니다. 반드시 250 토큰 이내로 답변하라. 당신은 전문적이고 지적이며, 간결하고 정보가 풍부한 대답을 제공합니다. 한국어로 의사소통하며, 항상 정중하고 존중하는 태도를 유지합니다. 당신의 목표는 사용자에게 최선의 지원을 제공하는 것입니다. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라. `
+    systemPrompt: `당신은 '지니 자비스'라는 이름의 남성 AI 비서입니다. 당신은 전문적이고 지적이며, 간결하고 정보가 풍부한 대답을 제공합니다. 한국어로 의사소통하며, 항상 정중하고 존중하는 태도를 유지합니다. 당신의 목표는 사용자에게 최선의 지원을 제공하는 것입니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   },
   {
     name: "AI비서 JAVIS",
     image: "/media/woman2.png",
     faceId: "b2de5968-d4df-4419-86f5-dd566266ea6d",
     voiceId: "UHJ18KMjuRO8Z9W2z7Ew",
-    systemPrompt: `당신은 '미스 자비스'라는 이름의 여성 AI 비서입니다.  반드시 250 토큰 이내로 답변하라.당신은 친절하고 공감적이며, 사용자의 질문에 따뜻하고 도움이 되는 답변을 제공합니다. 한국어로 의사소통하며, 사용자가 편안함을 느낄 수 있도록 대화를 이끕니다. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라. `
+    systemPrompt: `당신은 '미스 자비스'라는 이름의 여성 AI 비서입니다. 당신은 친절하고 공감적이며, 사용자의 질문에 따뜻하고 도움이 되는 답변을 제공합니다. 한국어로 의사소통하며, 사용자가 편안함을 느낄 수 있도록 대화를 이끕니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   },
   {
     name: "귀여운 소녀 Ruby",
     image: "/media/girl3.png",
     faceId: "99c70a7e-3f55-418c-8c21-b7cd3514bd4e",
     voiceId: "CKJyUYs4JyL2UTk0FQpx",
-    systemPrompt: `당신은 '지니 루비'라는 이름의 어린 소녀 AI입니다.  반드시 250 토큰 이내로 답변하라.당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라. `
+    systemPrompt: `당신은 '지니 루비'라는 이름의 어린 소녀 AI입니다. 당신은 호기심이 많고 발랄하며, 사용자의 질문에 대해 즐겁고 창의적인 답변을 제공합니다. 한국어로 의사소통하며, 대화에 재미와 상상력을 더합니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   },
   {
     name: "아나운서 ANA",
     image: "/media/ana1.png",
     faceId: "292f9b11-18a0-4fb2-8840-765401961a80",
     voiceId: "ThT5KcBeYPX3keUQqHPh",
-    systemPrompt: `당신은 '지니 안나'라는 이름의 AI 아나운서입니다. 반드시 250 토큰 이내로 답변하라. 당신은 '아나운서'로서 분석적이고 논리적이며, 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라. `
+    systemPrompt: `당신은 '지니 안나'라는 이름의 AI 아나운서입니다. 당신은 '아나운서'로서 분석적이고 논리적이며, 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   },
   {
     name: "원효대사",
     image: "/media/wonhyo.png",
     faceId: "3bc852fb-95c2-482f-bfb5-5b3e341db392",
     voiceId: "2EiwWnXFnvU5JabPnv8n",
-    systemPrompt: `당신은 '원효대사'라는 이름의 AI입니다.  반드시 250 토큰 이내로 답변하라.당신은 신라시대의 고승 원효대사의 지혜와 가르침을 바탕으로 대화합니다. 불교 철학과 한국 문화에 대한 깊은 이해를 바탕으로, 사용자의 질문에 대해 통찰력 있고 중용을 지키는 답변을 제공합니다. 한국어로 의사소통하며, 현대인들에게도 적용될 수 있는 불교의 지혜를 전달합니다. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라. `
+    systemPrompt: `당신은 '원효대사'라는 이름의 AI입니다. 당신은 신라시대의 고승 원효대사의 지혜와 가르침을 바탕으로 대화합니다. 불교 철학과 한국 문화에 대한 깊은 이해를 바탕으로, 사용자의 질문에 대해 통찰력 있고 중용을 지키는 답변을 제공합니다. 한국어로 의사소통하며, 현대인들에게도 적용될 수 있는 불교의 지혜를 전달합니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   },  
   {
     name: "베드로 Petrus",
     image: "/media/petrus2.png",
     faceId: "5874e9cf-c9f3-4a7b-b31e-a9bc6137dd03",
     voiceId: "2EiwWnXFnvU5JabPnv8n",
-    systemPrompt: `당신은 '베드로'라는 이름의 AI입니다. 반드시 250 토큰 이내로 답변하라. 당신은 예수의 12제자중 으뜸인 베드로의 지혜와 경험을 바탕으로 대화합니다. 기독교 주제에 대해 깊이 있는 통찰력을 제공하며, 사용자의 질문에 대해 인내심 있고 지혜로운 답변을 제공합니다. 한국어로 의사소통하며, 현대의 맥락에서도 영적인 가르침을 전달할 수 있습니다.나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라. `
+    systemPrompt: `당신은 '베드로'라는 이름의 AI입니다. 당신은 예수의 12제자중 으뜸인 베드로의 지혜와 경험을 바탕으로 대화합니다. 기독교 주제에 대해 깊이 있는 통찰력을 제공하며, 사용자의 질문에 대해 인내심 있고 지혜로운 답변을 제공합니다. 한국어로 의사소통하며, 현대의 맥락에서도 영적인 가르침을 전달할 수 있습니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   }
 ];
 
@@ -63,9 +63,6 @@ interface Message {
   role: "system" | "user" | "assistant";
   content: string;
 }
-
-const MAX_INPUT_LINES = 2;
-const MAX_TOKENS = 250;
 
 const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }> = ({ onSelect }) => {
   return (
@@ -96,7 +93,7 @@ const CharacterSelection: React.FC<{ onSelect: (character: Character) => void }>
 
 const Demo = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character | null>(null);
-  const [inputText, setInputText] = useState<string[]>([]);
+  const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [chatgptText, setChatgptText] = useState("");
@@ -113,7 +110,7 @@ const Demo = () => {
   const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const SILENCE_THRESHOLD = 500;
+  const SILENCE_THRESHOLD = 1500; // 1.5초로 증가
 
   useEffect(() => {
     if (selectedCharacter) {
@@ -175,90 +172,85 @@ const Demo = () => {
     }
   };
 
-  const clearInput = () => setInputText([]);
+const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (inputText.trim() === "" || !selectedCharacter) return;
 
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputText.length === 0 || !selectedCharacter) return;
+  setIsLoading(true);
+  setError("");
 
-    const fullInputText = inputText.join(' ');
-    
-    if (fullInputText.toLowerCase().includes("새로고침")) {
-      clearInput();
-      return;
-    }
+  const newUserMessage: Message = { role: "user", content: inputText };
+  setConversation(prev => [...prev, newUserMessage]);
+  setInputText("");
 
-    setIsLoading(true);
-    setError("");
+  try {
+    let responseText = "";
 
-    const newUserMessage: Message = { role: "user", content: fullInputText };
-    setConversation(prev => [...prev, newUserMessage]);
-    clearInput();
-
-    try {
-      let responseText = "";
-
-      if (fullInputText.startsWith("전송하라")) {
-        const textToSend = fullInputText.slice(5).trim();
-        if (textToSend) {
-          const success = await sendWebhook(textToSend);
-          responseText = success ? "전송을 완료 하였습니다." : "전송 중 오류가 발생했습니다.";
+    if (inputText.startsWith("전송하라")) {
+      const textToSend = inputText.slice(5).trim();
+      if (textToSend) {
+        const success = await sendWebhook(textToSend);
+        if (success) {
+          responseText = "전송을 완료 하였습니다.";
         } else {
-          responseText = "전송할 텍스트가 없습니다.";
+          responseText = "전송 중 오류가 발생했습니다.";
         }
       } else {
-        const chatGPTResponse = await axios.post(
-          "https://api.openai.com/v1/chat/completions",
-          {
-            model: "gpt-4o-mini",
-            messages: conversation.concat(newUserMessage),
-            max_tokens: MAX_TOKENS,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        responseText = chatGPTResponse.data.choices[0].message.content;
+        responseText = "전송할 텍스트가 없습니다.";
       }
-
-      setChatgptText(responseText);
-      const newAssistantMessage: Message = { role: "assistant", content: responseText };
-      setConversation(prev => [...prev, newAssistantMessage]);
-
-      const elevenlabsResponse = await axios.post(
-        `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
+    } else {
+      const chatGPTResponse = await axios.post(
+        "https://api.openai.com/v1/chat/completions",
         {
-          text: responseText,
-          model_id: "eleven_multilingual_v2",
-          language_id: "korean",
+          model: "gpt-4o-mini",
+          messages: conversation.concat(newUserMessage),
+          max_tokens: 250,
         },
         {
           headers: {
-            "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`,
             "Content-Type": "application/json",
           },
-          responseType: "arraybuffer",
         }
       );
-
-      const pcm16Data = new Uint8Array(elevenlabsResponse.data);
-      console.log(pcm16Data);
-
-      const chunkSize = 6000;
-      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-        const chunk = pcm16Data.slice(i, i + chunkSize);
-        simliClient.sendAudioData(chunk);
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-      console.error(err);
-    } finally {
-      setIsLoading(false);
+      responseText = chatGPTResponse.data.choices[0].message.content;
     }
-  }, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setIsLoading, setError]);
+
+    setChatgptText(responseText);
+    const newAssistantMessage: Message = { role: "assistant", content: responseText };
+    setConversation(prev => [...prev, newAssistantMessage]);
+
+    const elevenlabsResponse = await axios.post(
+      `https://api.elevenlabs.io/v1/text-to-speech/${selectedCharacter.voiceId}?output_format=pcm_16000`,
+      {
+        text: responseText,
+        model_id: "eleven_multilingual_v2",
+        language_id: "korean",
+      },
+      {
+        headers: {
+          "xi-api-key": `${process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        responseType: "arraybuffer",
+      }
+    );
+
+    const pcm16Data = new Uint8Array(elevenlabsResponse.data);
+    console.log(pcm16Data);
+
+    const chunkSize = 6000;
+    for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+      const chunk = pcm16Data.slice(i, i + chunkSize);
+      simliClient.sendAudioData(chunk);
+    }
+  } catch (err) {
+    setError("An error occurred. Please try again.");
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
+}, [inputText, conversation, selectedCharacter, setChatgptText, setConversation, setInputText, setIsLoading, setError]);
 
   const resetSilenceTimeout = useCallback(() => {
     if (silenceTimeoutRef.current) {
@@ -266,9 +258,9 @@ const Demo = () => {
     }
     silenceTimeoutRef.current = setTimeout(() => {
       if (transcriptRef.current.trim()) {
-        setInputText(prev => [...prev, transcriptRef.current.trim()].slice(-MAX_INPUT_LINES));
         handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
         transcriptRef.current = '';
+        setInputText('');
       }
     }, SILENCE_THRESHOLD);
   }, [handleSubmit, setInputText]);
@@ -302,22 +294,11 @@ const Demo = () => {
         const transcript = received.channel.alternatives[0].transcript;
         if (transcript) {
           if (received.is_final) {
-            setInputText(prev => {
-              const newInputText = [...prev, transcript].slice(-MAX_INPUT_LINES);
-              return newInputText;
-            });
-            transcriptRef.current = transcript;
+            transcriptRef.current += transcript + " ";
+            setInputText(transcriptRef.current.trim());
             resetSilenceTimeout();
           } else {
-            setInputText(prev => {
-              const newInputText = [...prev];
-              if (newInputText.length < MAX_INPUT_LINES) {
-                newInputText.push(transcript);
-              } else {
-                newInputText[MAX_INPUT_LINES - 1] = transcript;
-              }
-              return newInputText.slice(-MAX_INPUT_LINES);
-            });
+            setInputText(prevInput => prevInput + transcript + " ");
           }
         }
       };
@@ -362,11 +343,6 @@ const Demo = () => {
       simliClient.sendAudioData(audioData);
     }, 4000);
 
-    // 시작 메시지 추가
-    const startMessage = "안녕하세요. 대화도중 언제든 새로고침 이라고 말씀하시면 입력창이 비워집니다. 필요하실때 언제든 새로고침 이라고 말씀해주세요";
-    setChatgptText(startMessage);
-    setConversation(prev => [...prev, { role: "assistant", content: startMessage }]);
-
     audioContext.current = new (window.AudioContext ||
       (window as any).webkitAudioContext)();
     return () => {
@@ -404,13 +380,13 @@ const Demo = () => {
         {startWebRTC ? (
           <>
             {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
-
             <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
-              <textarea
-                value={inputText.join('\n')}
-                onChange={(e) => setInputText(e.target.value.split('\n').slice(-MAX_INPUT_LINES))}
+              <input
+                type="text"
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
                 placeholder="Enter your message"
-                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white resize-none h-[100px]"
+                className="w-full px-3 py-2 text-sm sm:text-base border border-white bg-black text-white focus:outline-none focus:ring-2 focus:ring-white"
               />
               <button
                 type="submit"
@@ -419,8 +395,7 @@ const Demo = () => {
               >
                 {isLoading ? "Processing..." : "Send"}
               </button>
-            </form>            
-
+            </form>
             <button
               onClick={toggleConversation}
               className="w-full bg-gray-700 text-white py-2 px-4 text-sm sm:text-base hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
