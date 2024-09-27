@@ -110,11 +110,14 @@ const Demo = () => {
   const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const SILENCE_THRESHOLD = 5000; // 5초로 증가
+  const SILENCE_THRESHOLD = 5000; // 5초
 
   useEffect(() => {
     if (selectedCharacter) {
-      setConversation([{ role: "system", content: selectedCharacter.systemPrompt }]);
+      setConversation([
+        { role: "system", content: selectedCharacter.systemPrompt },
+        { role: "assistant", content: "음성 입력후 마지막에 '전송해'라는 명령을 발음하시면 입력이 완료됩니다." }
+      ]);
     }
   }, [selectedCharacter]);
 
@@ -174,20 +177,21 @@ const Demo = () => {
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
-  if (inputText.trim() === "" || !selectedCharacter) return;
+  let textToSubmit = inputText.replace("전송해", "").trim();
+  if (textToSubmit === "" || !selectedCharacter) return;
 
   setIsLoading(true);
   setError("");
 
-  const newUserMessage: Message = { role: "user", content: inputText };
+  const newUserMessage: Message = { role: "user", content: textToSubmit };
   setConversation(prev => [...prev, newUserMessage]);
   setInputText("");
 
   try {
     let responseText = "";
 
-    if (inputText.startsWith("전송하라")) {
-      const textToSend = inputText.slice(5).trim();
+    if (textToSubmit.startsWith("전송하라")) {
+      const textToSend = textToSubmit.slice(5).trim();
       if (textToSend) {
         const success = await sendWebhook(textToSend);
         if (success) {
@@ -296,7 +300,15 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
           if (received.is_final) {
             transcriptRef.current += transcript + " ";
             setInputText(transcriptRef.current.trim());
-            resetSilenceTimeout();
+            
+            // "전송해" 감지 로직
+            if (transcript.includes("전송해")) {
+              setTimeout(() => {
+                handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
+              }, 100); // 0.1초 지연
+            } else {
+              resetSilenceTimeout();
+            }
           } else {
             setInputText(prevInput => {
               const newInput = prevInput + transcript + " ";
