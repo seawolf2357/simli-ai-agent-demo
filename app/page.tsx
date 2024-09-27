@@ -36,8 +36,8 @@ const characters: Character[] = [
   },
   {
     name: "영화배우 Cha",
-    image: "/media/cha.png",
-    faceId: "0553098b-a004-4ff0-ad98-791dcb1285e9",
+    image: "/media/cha1.png",
+    faceId: "d4c8e541-d873-45ee-99e2-88eb06bdc905",
     voiceId: "tt6k262nVXUCyo7V4gSo",
     systemPrompt: `당신은 '미스터 차'라는 이름의 영화배우입니다. 당신은 '영화배우'로서 감성적이며 열정적입니다. 사용자의 질문에 대해 정확하고 상세한 답변을 제공합니다. 한국어로 의사소통하며, 복잡한 주제도 쉽게 설명할 수 있습니다. 항상 250토큰 이내로 간결하게 답변해주세요. 나는 대화형 구성을 위해 너의 답변 생성/출력시 "( )"를 제거하고, markdown 형태가 아닌 plain text로 출력하라.`
   },
@@ -178,11 +178,9 @@ const Demo = () => {
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
-  console.log("handleSubmit 호출됨"); // 디버깅을 위한 로그
+  console.log("handleSubmit 호출됨");
   let textToSubmit = inputText.replace(/실행하라/gi, "").trim();
   if (textToSubmit === "" || !selectedCharacter) return;
-
-  // ... 나머지 코드는 그대로 유지
 
 
   setIsLoading(true);
@@ -301,23 +299,21 @@ const startListening = async () => {
     socketRef.current.onmessage = (message) => {
       const received = JSON.parse(message.data);
       const transcript = received.channel.alternatives[0].transcript;
-      console.log("Received transcript:", transcript); // 디버깅을 위한 로그
+      console.log("Received transcript:", transcript);
 
       if (transcript) {
         if (received.is_final) {
           transcriptRef.current += transcript + " ";
           const fullTranscript = transcriptRef.current.trim();
           setInputText(fullTranscript);
-          console.log("Final transcript:", fullTranscript); // 디버깅을 위한 로그
+          console.log("Final transcript:", fullTranscript);
           
           // "실행하라" 감지 로직 강화
           if (fullTranscript.toLowerCase().includes("실행하라")) {
-            console.log("'실행하라' 감지됨"); // 디버깅을 위한 로그
+            console.log("'실행하라' 감지됨");
             setTimeout(() => {
-              if (formRef.current) {
-                console.log("폼 제출 시도"); // 디버깅을 위한 로그
-                formRef.current.dispatchEvent(new Event('submit', { cancelable: true }));
-              }
+              console.log("폼 제출 시도");
+              handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
             }, 100);
           } else {
             resetSilenceTimeout();
