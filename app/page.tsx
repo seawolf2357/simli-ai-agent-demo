@@ -110,7 +110,7 @@ const Demo = () => {
   const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const SILENCE_THRESHOLD = 1500; // 1.5초로 증가
+  const SILENCE_THRESHOLD = 5000; // 5초로 증가
 
   useEffect(() => {
     if (selectedCharacter) {
@@ -270,7 +270,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
       
-      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=500', [
+      socketRef.current = new WebSocket('wss://api.deepgram.com/v1/listen?language=ko&model=general-enhanced&tier=enhanced&punctuate=true&interim_results=true&vad_turnoff=2000', [
         'token',
         process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY || 'f4d56c63171fc207b0ae3dfd0521ac8a43d4882d',
       ]);
@@ -298,7 +298,11 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
             setInputText(transcriptRef.current.trim());
             resetSilenceTimeout();
           } else {
-            setInputText(prevInput => prevInput + transcript + " ");
+            setInputText(prevInput => {
+              const newInput = prevInput + transcript + " ";
+              transcriptRef.current = newInput;
+              return newInput;
+            });
           }
         }
       };
