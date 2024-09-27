@@ -109,6 +109,7 @@ const Demo = () => {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const transcriptRef = useRef<string>('');
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const SILENCE_THRESHOLD = 5000; // 5초
 
@@ -116,7 +117,7 @@ const Demo = () => {
     if (selectedCharacter) {
       setConversation([
         { role: "system", content: selectedCharacter.systemPrompt },
-        { role: "assistant", content: "음성 입력후 마지막에 '전송해'라는 명령을 발음하시면 입력이 완료됩니다." }
+        { role: "assistant", content: "음성 입력후 마지막에 '실행하라'라는 명령을 발음하시면 입력이 완료됩니다." }
       ]);
     }
   }, [selectedCharacter]);
@@ -177,7 +178,7 @@ const Demo = () => {
 
 const handleSubmit = useCallback(async (e: React.FormEvent) => {
   e.preventDefault();
-  let textToSubmit = inputText.replace("전송해", "").trim();
+  let textToSubmit = inputText.replace("실행하라", "").trim();
   if (textToSubmit === "" || !selectedCharacter) return;
 
   setIsLoading(true);
@@ -301,10 +302,12 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
             transcriptRef.current += transcript + " ";
             setInputText(transcriptRef.current.trim());
             
-            // "전송해" 감지 로직
-            if (transcript.includes("전송해")) {
+            // "실행하라" 감지 로직
+            if (transcript.includes("실행하라")) {
               setTimeout(() => {
-                handleSubmit(new Event('submit') as unknown as React.FormEvent<HTMLFormElement>);
+                if (formRef.current) {
+                  formRef.current.dispatchEvent(new Event('submit', { cancelable: true }));
+                }
               }, 100); // 0.1초 지연
             } else {
               resetSilenceTimeout();
@@ -396,7 +399,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         {startWebRTC ? (
           <>
             {chatgptText && <p className="w-full text-sm sm:text-base break-words">{chatgptText}</p>}
-            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
+            <form ref={formRef} onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 w-full">
               <input
                 type="text"
                 value={inputText}
