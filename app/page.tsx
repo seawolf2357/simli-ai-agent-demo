@@ -241,15 +241,17 @@ const Demo = () => {
       const pcm16Data = new Uint8Array(elevenlabsResponse.data);
       console.log(pcm16Data);
 
-      const chunkSize = 6000;      
-      for (let i = 0; i < pcm16Data.length; i += chunkSize) {
-        const chunk = pcm16Data.slice(i, i + chunkSize);
-        simliClient.sendAudioData(chunk);
-}
-// Data(chunk); 이 줄은 불필요해 보이므로 제거합니다.
-    } catch (err) {
-
-
+    const chunkSize = 6000;
+    for (let i = 0; i < pcm16Data.length; i += chunkSize) {
+      const chunk = pcm16Data.slice(i, i + chunkSize);
+      simliClient.sendAudioData(chunk);
+    }
+  } catch (err) {
+    setError("An error occurred. Please try again.");
+    console.error(err);
+  } finally {
+    setIsLoading(false);
+  }
       
 Data(chunk);
       }
