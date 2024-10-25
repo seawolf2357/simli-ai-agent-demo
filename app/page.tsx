@@ -204,7 +204,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
         {
           model: "gpt-4o-mini",
           messages: conversation.concat(newUserMessage),
-          max_tokens: 250,
+          max_tokens: 200,
         },
         {
           headers: {
