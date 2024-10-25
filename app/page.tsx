@@ -186,7 +186,7 @@ const handleSubmit = useCallback(async (e: React.FormEvent) => {
   try {
     let responseText = "";
 
-    if (inputText.startsWith("전송하라")) {
+    if (inputText.startsWith("실행하라")) {
       const textToSend = inputText.slice(5).trim();
       if (textToSend) {
         const success = await sendWebhook(textToSend);
